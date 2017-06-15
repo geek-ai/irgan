@@ -181,9 +181,9 @@ def main():
                     # param = pickle.load(open(DIS_MODEL_FILE))
                     # print( param)
                     param= None
-                    DIS_MODEL_FILE="model/model611666666667"
+                    DIS_MODEL_FILE="model/pre-trained.model"
                     param = pickle.load(open(DIS_MODEL_FILE,"rb"))
-                    discriminator = Discriminator.Discriminator_pair_wise(
+                    discriminator = Discriminator.Discriminator(
                             sequence_length=FLAGS.max_sequence_length,
                             batch_size=FLAGS.batch_size,
                             vocab_size=len(vocab),
