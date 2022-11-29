@@ -12,35 +12,42 @@ cores = multiprocessing.cpu_count()
 EMB_DIM = 5
 USER_NUM = 943
 ITEM_NUM = 1683
+# USER_NUM = 1000
+# ITEM_NUM = 7301
 DNS_K = 5
 all_items = set(range(ITEM_NUM))
 workdir = 'ml-100k/'
+train_filename='movielens-100k-train.txt'
+test_filename='movielens-100k-test.txt'
+# workdir= 'SEEK_AU_202109_100_5K/'
+# train_filename='train'
+# test_filename='test'
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
 #########################################################################################
 # Load data
 #########################################################################################
 user_pos_train = {}
-with open(workdir + 'movielens-100k-train.txt')as fin:
+with open(workdir + train_filename)as fin:
     for line in fin:
         line = line.split()
         uid = int(line[0])
         iid = int(line[1])
         r = float(line[2])
-        if r > 3.99:
+        if r > 0:
             if uid in user_pos_train:
                 user_pos_train[uid].append(iid)
             else:
                 user_pos_train[uid] = [iid]
 
 user_pos_test = {}
-with open(workdir + 'movielens-100k-test.txt')as fin:
+with open(workdir + test_filename)as fin:
     for line in fin:
         line = line.split()
         uid = int(line[0])
         iid = int(line[1])
         r = float(line[2])
-        if r > 3.99:
+        if r > 0:
             if uid in user_pos_test:
                 user_pos_test[uid].append(iid)
             else:
@@ -131,7 +138,6 @@ def simple_test(sess, model):
         batch_result = pool.map(simple_test_one_user, user_batch_rating_uid)
         for re in batch_result:
             result += re
-
     pool.close()
     ret = result / test_user_num
     ret = list(ret)
@@ -168,7 +174,7 @@ def main():
     print "dis ", simple_test(sess, discriminator)
     best_p5 = 0.
 
-    # generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
+    #generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
 
     for epoch in range(80):
         generate_dns(sess, discriminator, DIS_TRAIN_FILE)  # dynamic negative sample
