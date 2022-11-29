@@ -10,18 +10,18 @@ cores = multiprocessing.cpu_count()
 # Hyper-parameters
 #########################################################################################
 EMB_DIM = 5
-# USER_NUM = 943
-# ITEM_NUM = 1683
-USER_NUM = 3500
-ITEM_NUM = 8652
+USER_NUM = 943
+ITEM_NUM = 1683
+# USER_NUM = 1000
+# ITEM_NUM = 7301
 DNS_K = 5
 all_items = set(range(ITEM_NUM))
-# workdir = 'ml-100k/'
-# train_filename='movielens-100k-train.txt'
-# test_filename='movielens-100k-test.txt'
-workdir= 'SEEK_AU_202109_100_5K/'
-train_filename='train'
-test_filename='test'
+workdir = 'ml-100k/'
+train_filename='movielens-100k-train.txt'
+test_filename='movielens-100k-test.txt'
+# workdir= 'SEEK_AU_202109_100_5K/'
+# train_filename='train'
+# test_filename='test'
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
 #########################################################################################
@@ -146,7 +146,7 @@ def simple_test(sess, model):
 
 def generate_uniform(filename):
     data = []
-    print('uniform negative sampling...')
+    print 'uniform negative sampling...'
     for u in user_pos_train:
         pos = user_pos_train[u]
         candidates = list(all_items - set(pos))
@@ -171,7 +171,7 @@ def main():
     sess.run(tf.global_variables_initializer())
 
     dis_log = open(workdir + 'dis_log_dns.txt', 'w')
-    #print("dis ", simple_test(sess, discriminator))
+    print "dis ", simple_test(sess, discriminator)
     best_p5 = 0.
 
     #generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
@@ -188,17 +188,16 @@ def main():
                              feed_dict={discriminator.u: [u], discriminator.pos: [i],
                                         discriminator.neg: [j]})
 
-        print("ok")
-        # result = simple_test(sess, discriminator)
-        # print("epoch ", epoch, "dis: ", result)
-        # if result[1] > best_p5:
-        #     best_p5 = result[1]
-        #     discriminator.save_model(sess, DIS_MODEL_FILE)
-        #     print("best P@5: ", best_p5)
+        result = simple_test(sess, discriminator)
+        print "epoch ", epoch, "dis: ", result
+        if result[1] > best_p5:
+            best_p5 = result[1]
+            discriminator.save_model(sess, DIS_MODEL_FILE)
+            print "best P@5: ", best_p5
 
-        #buf = '\t'.join([str(x) for x in result])
-        #dis_log.write(str(epoch) + '\t' + buf + '\n')
-        #dis_log.flush()
+        buf = '\t'.join([str(x) for x in result])
+        dis_log.write(str(epoch) + '\t' + buf + '\n')
+        dis_log.flush()
 
     dis_log.close()
 
