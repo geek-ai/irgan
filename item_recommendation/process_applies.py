@@ -1,7 +1,7 @@
 capplies = dict()
 
 NUM_USER_TRAIN = 1000
-NUM_USER_TEST = 100
+NUM_USER_TEST = 1000
 
 f = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/applies.csv.train")
 candidate_index_map = dict()

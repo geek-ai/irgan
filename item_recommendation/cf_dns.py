@@ -3,6 +3,8 @@ from dis_model_dns import DIS
 import cPickle
 import numpy as np
 import multiprocessing
+import time
+import matplotlib.pyplot as plt
 
 cores = multiprocessing.cpu_count()/2
 
@@ -96,7 +98,7 @@ def ndcg_at_k(r, k):
     return dcg_at_k(r, k) / dcg_max
 
 
-def simple_test_one_user(x):
+def simple_test_one_user_test(x):
     rating = x[0]
     u = x[1]
 
@@ -125,9 +127,41 @@ def simple_test_one_user(x):
 
     return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100])
 
+def simple_test_one_user_train(x):
+    rating = x[0]
+    u = x[1]
 
-def simple_test(sess, model):
-    result = np.array([0.] * 6)
+    test_items = list(all_items)
+    item_score = []
+    for i in test_items:
+        item_score.append((i, rating[i]))
+
+    item_score = sorted(item_score, key=lambda x: x[1], reverse=True)
+    item_sort = [(x[0], x[1]) for x in item_score]
+
+    r = []
+    for i, j in item_sort:
+        if i in user_pos_train[u]:
+            r.append(1)
+        else:
+            r.append(0)
+
+    p_3 = np.mean(r[:3])
+    p_5 = np.mean(r[:5])
+    p_100 = np.mean(r[:100])
+
+    ndcg_3 = ndcg_at_k(r, 3)
+    ndcg_5 = ndcg_at_k(r, 5)
+    ndcg_100 = ndcg_at_k(r, 100)
+
+    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100])
+
+def evaluate(sess, model, which_set = "test"):
+    if which_set == "test":
+        which_func = simple_test_one_user_test
+    else:
+        which_func = simple_test_one_user_train
+    result = np.array([0.] * 2)
     pool = multiprocessing.Pool(cores)
     batch_size = 128
     test_users = user_pos_test.keys()
@@ -141,12 +175,12 @@ def simple_test(sess, model):
 
         user_batch_rating = sess.run(model.all_rating, {model.u: user_batch})
         user_batch_rating_uid = zip(user_batch_rating, user_batch)
-        batch_result = pool.map(simple_test_one_user, user_batch_rating_uid)
+        batch_result = pool.map(which_func, user_batch_rating_uid)
         for re in batch_result:
-            result += re
+            result += [re[2], re[5]]
     pool.close()
     ret = result / test_user_num
-    ret = zip(["p_3", "p_5", "p_100", "ndcg_3", "ndcg_5", "ndcg_100"], list(ret))
+    ret = zip(["p_100", "ndcg_100"], list(ret))
     return ret
 
 
@@ -177,12 +211,21 @@ def main():
     sess.run(tf.global_variables_initializer())
 
     dis_log = open(workdir + 'dis_log_dns.txt', 'w')
-    print("epoch 0", "dis ", simple_test(sess, discriminator))
-    best_p5 = 0.
+
+    epoch = 0
+    result_train = evaluate(sess, discriminator, "train")
+    result_test = evaluate(sess, discriminator, "test")
+    print("epoch ", epoch, "dis train: ", result_train, "dis test:", result_test)
 
     #generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
 
-    for epoch in range(80):
+    # creating initial data values
+    # of x and y
+    x_values = np.array([0])
+    y_values_train =  np.array([result_train[1][1]])
+    y_values_test =  np.array([result_test[1][1]])
+
+    for epoch in range(5):
         generate_dns(sess, discriminator, DIS_TRAIN_FILE)  # dynamic negative sample
         with open(DIS_TRAIN_FILE)as fin:
             for line in fin:
@@ -194,18 +237,47 @@ def main():
                              feed_dict={discriminator.u: [u], discriminator.pos: [i],
                                         discriminator.neg: [j]})
 
-        result = simple_test(sess, discriminator)
-        print("epoch ", epoch+1, "dis: ", result)
-        if result[1] > best_p5:
-            best_p5 = result[1]
-            discriminator.save_model(sess, DIS_MODEL_FILE)
-            #print("best P@5: ", best_p5)
+        result_train = evaluate(sess, discriminator, "train")
+        result_test = evaluate(sess, discriminator, "test")
+        print("epoch ", epoch+1, "dis train: ", result_train, "dis test:", result_test)
+        x_values = np.append(x_values, epoch+1)
+        y_values_train = np.append(y_values_train, result_train[1][1])
+        y_values_test = np.append(y_values_test, result_test[1][1])
 
-        buf = '\t'.join([str(x) for x in result])
+
+        buf = '\t'.join([str(x) for x in result_train])
         dis_log.write(str(epoch) + '\t' + buf + '\n')
         dis_log.flush()
 
     dis_log.close()
+
+    # to run GUI event loop
+    plt.ion()
+
+    # here we are creating sub plots
+    figure, ax = plt.subplots(figsize=(10, 8))
+    line1, = ax.plot(x_values, y_values_train)
+    line1.set_xdata(x_values)
+    line1.set_ydata(y_values_train)
+    line2, = ax.plot(x_values, y_values_test)
+    line2.set_xdata(x_values)
+    line2.set_ydata(y_values_test)
+
+    # setting title
+    plt.title("Model convergence", fontsize=20)
+
+    # setting x-axis label and y-axis label
+    plt.xlabel("Iteration")
+    plt.ylabel("Model Performance")
+    plt.show()
+
+    # drawing updated values
+    figure.canvas.draw()
+
+    # This will run the GUI event
+    # loop until all UI events
+    # currently waiting have been processed
+    figure.canvas.flush_events()
 
 
 if __name__ == '__main__':
