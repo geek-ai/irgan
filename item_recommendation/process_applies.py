@@ -1,6 +1,9 @@
 capplies = dict()
 
 f = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/applies.csv.train")
+candidate_index_map = dict()
+job_index_map = dict()
+
 for l in f:
     line = l.split(",")
     c = line[2]
@@ -12,8 +15,8 @@ for l in f:
 ftrain = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/train", "w")
 ftest = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/test", "w")
 
-train_i = 0
-test_i = 0
+train_cands_num = 0
+test_cands_num = 0
 jobs = dict()
 
 train_tuples = []
@@ -24,29 +27,31 @@ for k in sorted(capplies, key=lambda k: len(capplies[k])):
         continue
     train_applies = applies[:int(4*len(applies)/5)]
     test_applies = applies[int(4*len(applies)/5)+1:]
-    if train_i < 10000:
-        for a in train_applies:
-            if a not in jobs:
-                jobs[a] = 1
-            train_tuples.append((str(k), str(a)))
-            train_i += 1
-    if test_i < 1000:
-        for a in test_applies:
-            if a not in jobs:
-                jobs[a] = 1
-            test_tuples.append((str(k), str(a)))
-            test_i += 1
-
-candidate_index_map = dict()
-job_index_map = dict()
-
-for apps in [train_tuples, test_tuples]:
-    for c, j in apps:
-        if c not in candidate_index_map:
-            candidate_index_map[c] = str(len(candidate_index_map))
-        if j not in job_index_map:
-            job_index_map[j] = str(len(job_index_map))
-
+    print(k, "train:", len(train_applies), "test:", len(test_applies))
+    # We only include candidates that have at least 1 apply to include in test set:
+    if len(train_applies) > 0 and len(test_applies) > 0:
+        # make sure we have 1000 candidates in the train set.
+        if train_cands_num < 1000:
+            for a in train_applies:
+                if a not in jobs:
+                    jobs[a] = 1
+                train_tuples.append((str(k), str(a)))
+                if a not in job_index_map:
+                    job_index_map[a] = str(len(job_index_map))
+            train_cands_num += 1
+            if k not in candidate_index_map:
+                candidate_index_map[k] = str(len(candidate_index_map))
+        # make sure we have 100 candidates in the test set.
+        if test_cands_num < 100:
+            for a in test_applies:
+                if a not in jobs:
+                    jobs[a] = 1
+                test_tuples.append((str(k), str(a)))
+                if a not in job_index_map:
+                    job_index_map[a] = str(len(job_index_map))
+            test_cands_num += 1
+            if k not in candidate_index_map:
+                candidate_index_map[k] = str(len(candidate_index_map))
 
 print("Num candidates:", len(candidate_index_map))
 print("Num jobs:", len(job_index_map))

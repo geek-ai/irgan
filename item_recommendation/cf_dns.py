@@ -4,7 +4,7 @@ import cPickle
 import numpy as np
 import multiprocessing
 
-cores = multiprocessing.cpu_count()
+cores = multiprocessing.cpu_count()/2
 
 #########################################################################################
 # Hyper-parameters
@@ -126,6 +126,7 @@ def simple_test(sess, model):
     batch_size = 128
     test_users = user_pos_test.keys()
     test_user_num = len(test_users)
+    print("Num test users:", test_user_num)
     index = 0
     while True:
         if index >= test_user_num:
@@ -171,7 +172,7 @@ def main():
     sess.run(tf.global_variables_initializer())
 
     dis_log = open(workdir + 'dis_log_dns.txt', 'w')
-    #print("dis ", simple_test(sess, discriminator))
+    print("dis ", simple_test(sess, discriminator))
     best_p5 = 0.
 
     #generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
@@ -188,17 +189,16 @@ def main():
                              feed_dict={discriminator.u: [u], discriminator.pos: [i],
                                         discriminator.neg: [j]})
 
-        print("ok")
-        # result = simple_test(sess, discriminator)
-        # print("epoch ", epoch, "dis: ", result)
-        # if result[1] > best_p5:
-        #     best_p5 = result[1]
-        #     discriminator.save_model(sess, DIS_MODEL_FILE)
-        #     print("best P@5: ", best_p5)
+        result = simple_test(sess, discriminator)
+        print("epoch ", epoch, "dis: ", result)
+        if result[1] > best_p5:
+            best_p5 = result[1]
+            discriminator.save_model(sess, DIS_MODEL_FILE)
+            print("best P@5: ", best_p5)
 
-        #buf = '\t'.join([str(x) for x in result])
-        #dis_log.write(str(epoch) + '\t' + buf + '\n')
-        #dis_log.flush()
+        buf = '\t'.join([str(x) for x in result])
+        dis_log.write(str(epoch) + '\t' + buf + '\n')
+        dis_log.flush()
 
     dis_log.close()
 
