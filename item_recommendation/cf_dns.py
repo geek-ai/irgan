@@ -10,15 +10,7 @@ cores = multiprocessing.cpu_count()/2
 # Hyper-parameters
 #########################################################################################
 EMB_DIM = 5
-# USER_NUM = 943
-# ITEM_NUM = 1683
-USER_NUM = 1000
-ITEM_NUM = 3313
 DNS_K = 5
-all_items = set(range(ITEM_NUM))
-# workdir = 'ml-100k/'
-# train_filename='movielens-100k-train.txt'
-# test_filename='movielens-100k-test.txt'
 workdir= 'SEEK_AU_202109_100_5K/'
 train_filename='train'
 test_filename='test'
@@ -28,6 +20,8 @@ DIS_MODEL_FILE = workdir + "model_dns.pkl"
 # Load data
 #########################################################################################
 user_pos_train = {}
+all_items_ids = []
+all_user_ids = []
 with open(workdir + train_filename)as fin:
     for line in fin:
         line = line.split()
@@ -39,6 +33,10 @@ with open(workdir + train_filename)as fin:
                 user_pos_train[uid].append(iid)
             else:
                 user_pos_train[uid] = [iid]
+        if iid not in all_items_ids:
+            all_items_ids.append(iid)
+        if uid not in all_user_ids:
+            all_user_ids.append(uid)
 
 user_pos_test = {}
 with open(workdir + test_filename)as fin:
@@ -52,10 +50,18 @@ with open(workdir + test_filename)as fin:
                 user_pos_test[uid].append(iid)
             else:
                 user_pos_test[uid] = [iid]
+        if iid not in all_items_ids:
+            all_items_ids.append(iid)
+        if uid not in all_user_ids:
+            all_user_ids.append(uid)
+
+USER_NUM = len(user_pos_train)
+ITEM_NUM = len(all_items_ids)
+print(USER_NUM, ITEM_NUM)
+all_items = set(range(ITEM_NUM))
 
 all_users = user_pos_train.keys()
 all_users.sort()
-
 
 def generate_dns(sess, model, filename):
     data = []
@@ -100,10 +106,10 @@ def simple_test_one_user(x):
         item_score.append((i, rating[i]))
 
     item_score = sorted(item_score, key=lambda x: x[1], reverse=True)
-    item_sort = [x[0] for x in item_score]
+    item_sort = [(x[0], x[1]) for x in item_score]
 
     r = []
-    for i in item_sort:
+    for i, j in item_sort:
         if i in user_pos_test[u]:
             r.append(1)
         else:
@@ -111,13 +117,13 @@ def simple_test_one_user(x):
 
     p_3 = np.mean(r[:3])
     p_5 = np.mean(r[:5])
-    p_10 = np.mean(r[:10])
+    p_100 = np.mean(r[:100])
 
     ndcg_3 = ndcg_at_k(r, 3)
     ndcg_5 = ndcg_at_k(r, 5)
-    ndcg_10 = ndcg_at_k(r, 10)
+    ndcg_100 = ndcg_at_k(r, 100)
 
-    return np.array([p_3, p_5, p_10, ndcg_3, ndcg_5, ndcg_10])
+    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100])
 
 
 def simple_test(sess, model):
@@ -126,7 +132,6 @@ def simple_test(sess, model):
     batch_size = 128
     test_users = user_pos_test.keys()
     test_user_num = len(test_users)
-    print("Num test users:", test_user_num)
     index = 0
     while True:
         if index >= test_user_num:
@@ -141,7 +146,7 @@ def simple_test(sess, model):
             result += re
     pool.close()
     ret = result / test_user_num
-    ret = list(ret)
+    ret = zip(["p_3", "p_5", "p_100", "ndcg_3", "ndcg_5", "ndcg_100"], list(ret))
     return ret
 
 
@@ -172,7 +177,7 @@ def main():
     sess.run(tf.global_variables_initializer())
 
     dis_log = open(workdir + 'dis_log_dns.txt', 'w')
-    print("dis ", simple_test(sess, discriminator))
+    print("epoch 0", "dis ", simple_test(sess, discriminator))
     best_p5 = 0.
 
     #generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
@@ -190,11 +195,11 @@ def main():
                                         discriminator.neg: [j]})
 
         result = simple_test(sess, discriminator)
-        print("epoch ", epoch, "dis: ", result)
+        print("epoch ", epoch+1, "dis: ", result)
         if result[1] > best_p5:
             best_p5 = result[1]
             discriminator.save_model(sess, DIS_MODEL_FILE)
-            print("best P@5: ", best_p5)
+            #print("best P@5: ", best_p5)
 
         buf = '\t'.join([str(x) for x in result])
         dis_log.write(str(epoch) + '\t' + buf + '\n')

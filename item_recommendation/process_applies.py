@@ -1,5 +1,8 @@
 capplies = dict()
 
+NUM_USER_TRAIN = 1000
+NUM_USER_TEST = 100
+
 f = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/applies.csv.train")
 candidate_index_map = dict()
 job_index_map = dict()
@@ -23,7 +26,7 @@ train_tuples = []
 test_tuples = []
 for k in sorted(capplies, key=lambda k: len(capplies[k])):
     applies = capplies[k]
-    if len(applies) < 5:
+    if len(applies) < 7:
         continue
     train_applies = applies[:int(4*len(applies)/5)]
     test_applies = applies[int(4*len(applies)/5)+1:]
@@ -31,7 +34,7 @@ for k in sorted(capplies, key=lambda k: len(capplies[k])):
     # We only include candidates that have at least 1 apply to include in test set:
     if len(train_applies) > 0 and len(test_applies) > 0:
         # make sure we have 1000 candidates in the train set.
-        if train_cands_num < 1000:
+        if train_cands_num < NUM_USER_TRAIN:
             for a in train_applies:
                 if a not in jobs:
                     jobs[a] = 1
@@ -42,7 +45,7 @@ for k in sorted(capplies, key=lambda k: len(capplies[k])):
             if k not in candidate_index_map:
                 candidate_index_map[k] = str(len(candidate_index_map))
         # make sure we have 100 candidates in the test set.
-        if test_cands_num < 100:
+        if test_cands_num < NUM_USER_TEST:
             for a in test_applies:
                 if a not in jobs:
                     jobs[a] = 1
