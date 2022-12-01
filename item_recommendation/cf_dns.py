@@ -13,9 +13,6 @@ cores = multiprocessing.cpu_count()/2
 #########################################################################################
 EMB_DIM = 5
 DNS_K = 5
-#workdir= 'SEEK_AU_202109_100_5K/'
-#train_filename='train'
-#test_filename='test'
 workdir = 'ml-100k/'
 train_filename = 'movielens-100k-train.txt'
 test_filename = 'movielens-100k-test.txt'
@@ -241,7 +238,7 @@ def main():
     y_values_train =  np.array([result_train[0][1]])
     y_values_test =  np.array([result_test[0][1]])
 
-    for epoch in range(50):
+    for epoch in range(30):
         #generate_dns(sess, discriminator, DIS_TRAIN_FILE)  # dynamic negative sample
         with open(DIS_TRAIN_FILE)as fin:
             for line in fin:
@@ -251,10 +248,7 @@ def main():
                 j = int(line[2])
                 #positive:
                 _ = sess.run(discriminator.d_updates,
-                             feed_dict={discriminator.u: [u], discriminator.j: [i], discriminator.real: 1.0})
-                #negative:
-                _ = sess.run(discriminator.d_updates,
-                             feed_dict={discriminator.u: [u], discriminator.j: [j], discriminator.real: 0.0})
+                             feed_dict={discriminator.u: [u], discriminator.pos: [i], discriminator.neg: [j]})
 
         result_train = evaluate(sess, discriminator, "train")
         result_test = evaluate(sess, discriminator, "test")
@@ -270,34 +264,19 @@ def main():
 
     dis_log.close()
 
-    # to run GUI event loop
-    plt.ion()
-
-    # here we are creating sub plots
-    figure, ax = plt.subplots(figsize=(10, 8))
-    line1, = ax.plot(x_values, y_values_train)
+    line1, = plt.plot(x_values, y_values_train, label = "P@100 Train")
     line1.set_xdata(x_values)
     line1.set_ydata(y_values_train)
-    line2, = ax.plot(x_values, y_values_test)
+    line2, = plt.plot(x_values, y_values_test, label = "P@100 Test")
     line2.set_xdata(x_values)
     line2.set_ydata(y_values_test)
 
-    # setting title
     plt.title("Model convergence", fontsize=20)
 
-    # setting x-axis label and y-axis label
     plt.xlabel("Iteration")
     plt.ylabel("Model Performance")
+    plt.legend()
     plt.show()
-
-    # drawing updated values
-    figure.canvas.draw()
-
-    # This will run the GUI event
-    # loop until all UI events
-    # currently waiting have been processed
-    figure.canvas.flush_events()
-
 
 if __name__ == '__main__':
     main()
