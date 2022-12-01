@@ -12,16 +12,11 @@ cores = multiprocessing.cpu_count()
 EMB_DIM = 5
 USER_NUM = 943
 ITEM_NUM = 1683
-# USER_NUM = 1000
-# ITEM_NUM = 7301
 DNS_K = 5
 all_items = set(range(ITEM_NUM))
 workdir = 'ml-100k/'
 train_filename='movielens-100k-train.txt'
 test_filename='movielens-100k-test.txt'
-# workdir= 'SEEK_AU_202109_100_5K/'
-# train_filename='train'
-# test_filename='test'
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
 #########################################################################################
