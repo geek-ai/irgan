@@ -119,11 +119,11 @@ def simple_test_one_user_test(x):
     item_sort = [(x[0], x[1]) for x in item_score]
 
     r = []
-    mae = 0
+    rmse = 0
     for i, j in item_sort:
         if i in user_pos_test[u]:
             r.append(1)
-            mae += np.abs(1-j)
+            rmse += np.square(1-j)
         else:
             r.append(0)
 
@@ -135,7 +135,7 @@ def simple_test_one_user_test(x):
     ndcg_5 = ndcg_at_k(r, 5)
     ndcg_100 = ndcg_at_k(r, 100)
 
-    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, mae])
+    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, rmse])
 
 def simple_test_one_user_train(x):
     rating = x[0]
@@ -150,11 +150,11 @@ def simple_test_one_user_train(x):
     item_sort = [(x[0], x[1]) for x in item_score]
 
     r = []
-    mae = 0
+    rmse = 0
     for i, j in item_sort:
         if i in user_pos_train[u]:
             r.append(1)
-            mae += np.abs(1-j)
+            rmse += np.square(1-j)
         else:
             r.append(0)
 
@@ -166,7 +166,7 @@ def simple_test_one_user_train(x):
     ndcg_5 = ndcg_at_k(r, 5)
     ndcg_100 = ndcg_at_k(r, 100)
 
-    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, mae])
+    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, rmse])
 
 def evaluate(sess, model, which_set = "test"):
     num_ratings = 0
@@ -196,7 +196,7 @@ def evaluate(sess, model, which_set = "test"):
     pool.close()
     ret = (np.array(result.tolist()[:2]) / test_user_num).tolist()
     ret.append((np.array(result.tolist()[2]) / num_ratings).tolist())
-    ret = zip(["p_100", "ndcg_100", "mae"], ret)
+    ret = zip(["p_100", "ndcg_100", "rmse"], ret)
     return ret
 
 
@@ -238,8 +238,8 @@ def main():
     # creating initial data values
     # of x and y
     x_values = np.array([0])
-    y_values_train =  np.array([result_train[1][1]])
-    y_values_test =  np.array([result_test[1][1]])
+    y_values_train =  np.array([result_train[0][1]])
+    y_values_test =  np.array([result_test[0][1]])
 
     for epoch in range(50):
         #generate_dns(sess, discriminator, DIS_TRAIN_FILE)  # dynamic negative sample
@@ -249,19 +249,19 @@ def main():
                 u = int(line[0])
                 i = int(line[1])
                 j = int(line[2])
+                #positive:
                 _ = sess.run(discriminator.d_updates,
-                             feed_dict={discriminator.u: [u], discriminator.pos: [i],
-                                        discriminator.neg: [0], discriminator.real: 1.0})
+                             feed_dict={discriminator.u: [u], discriminator.j: [i], discriminator.real: 1.0})
+                #negative:
                 _ = sess.run(discriminator.d_updates,
-                             feed_dict={discriminator.u: [u], discriminator.pos: [j],
-                                        discriminator.neg: [0], discriminator.real: 0.0})
+                             feed_dict={discriminator.u: [u], discriminator.j: [j], discriminator.real: 0.0})
 
         result_train = evaluate(sess, discriminator, "train")
         result_test = evaluate(sess, discriminator, "test")
         print("epoch ", epoch+1, "dis train: ", result_train, "dis test:", result_test)
         x_values = np.append(x_values, epoch+1)
-        y_values_train = np.append(y_values_train, result_train[1][1])
-        y_values_test = np.append(y_values_test, result_test[1][1])
+        y_values_train = np.append(y_values_train, result_train[0][1])
+        y_values_test = np.append(y_values_test, result_test[0][1])
 
 
         buf = '\t'.join([str(x) for x in result_train])
