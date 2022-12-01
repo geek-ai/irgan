@@ -3,7 +3,7 @@ capplies = dict()
 NUM_USER_TRAIN = 1000
 NUM_USER_TEST = 1000
 
-f = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/applies.csv.train")
+f = open("/item_recommendation/seek/applies.csv.train")
 candidate_index_map = dict()
 job_index_map = dict()
 
@@ -15,8 +15,8 @@ for l in f:
         capplies[c] = []
     capplies[c].append(j)
 
-ftrain = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/train", "w")
-ftest = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/test", "w")
+ftrain = open("/item_recommendation/seek/train", "w")
+ftest = open("/item_recommendation/seek/test", "w")
 
 train_cands_num = 0
 test_cands_num = 0

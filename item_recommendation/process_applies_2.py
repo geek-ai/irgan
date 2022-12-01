@@ -2,7 +2,7 @@ candidates_map = dict()
 jobs_map = dict()
 capplies_train = dict()
 
-ftrain_input = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/applies.csv.train")
+ftrain_input = open("/item_recommendation/seek/applies.csv.train")
 candidate_index_map = dict()
 job_index_map = dict()
 
@@ -25,7 +25,7 @@ for l in ftrain_input:
 
 capplies_test = dict()
 
-ftest_input = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/applies.csv.test")
+ftest_input = open("/item_recommendation/seek/applies.csv.test")
 
 for l in ftest_input:
     line = l.split(",")
@@ -41,8 +41,8 @@ for l in ftest_input:
         jobs_map[j] = str(num_jobs)
         num_jobs += 1
 
-ftrain = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/train", "w")
-ftest = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/test", "w")
+ftrain = open("/item_recommendation/seek/train", "w")
+ftest = open("/item_recommendation/seek/test", "w")
 
 for c, applies in capplies_train.items():
     for j in applies:

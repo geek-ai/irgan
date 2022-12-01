@@ -13,9 +13,9 @@ cores = multiprocessing.cpu_count()/2
 #########################################################################################
 EMB_DIM = 5
 DNS_K = 5
-workdir = 'ml-100k/'
-train_filename = 'movielens-100k-train.txt'
-test_filename = 'movielens-100k-test.txt'
+workdir = 'seek/'
+train_filename = 'train'
+test_filename = 'test'
 
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
