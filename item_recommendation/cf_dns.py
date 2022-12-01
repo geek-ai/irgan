@@ -13,9 +13,13 @@ cores = multiprocessing.cpu_count()/2
 #########################################################################################
 EMB_DIM = 5
 DNS_K = 5
-workdir= 'SEEK_AU_202109_100_5K/'
-train_filename='train'
-test_filename='test'
+#workdir= 'SEEK_AU_202109_100_5K/'
+#train_filename='train'
+#test_filename='test'
+workdir = 'ml-100k/'
+train_filename = 'movielens-100k-train.txt'
+test_filename = 'movielens-100k-test.txt'
+
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
 #########################################################################################
@@ -111,9 +115,11 @@ def simple_test_one_user_test(x):
     item_sort = [(x[0], x[1]) for x in item_score]
 
     r = []
+    mae = 0
     for i, j in item_sort:
         if i in user_pos_test[u]:
             r.append(1)
+            mae += np.abs(1-j)
         else:
             r.append(0)
 
@@ -125,7 +131,7 @@ def simple_test_one_user_test(x):
     ndcg_5 = ndcg_at_k(r, 5)
     ndcg_100 = ndcg_at_k(r, 100)
 
-    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100])
+    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, mae])
 
 def simple_test_one_user_train(x):
     rating = x[0]
@@ -140,9 +146,11 @@ def simple_test_one_user_train(x):
     item_sort = [(x[0], x[1]) for x in item_score]
 
     r = []
+    mae = 0
     for i, j in item_sort:
         if i in user_pos_train[u]:
             r.append(1)
+            mae += np.square(1-j)
         else:
             r.append(0)
 
@@ -154,14 +162,14 @@ def simple_test_one_user_train(x):
     ndcg_5 = ndcg_at_k(r, 5)
     ndcg_100 = ndcg_at_k(r, 100)
 
-    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100])
+    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, mae])
 
 def evaluate(sess, model, which_set = "test"):
     if which_set == "test":
         which_func = simple_test_one_user_test
     else:
         which_func = simple_test_one_user_train
-    result = np.array([0.] * 2)
+    result = np.array([0.] * 3)
     pool = multiprocessing.Pool(cores)
     batch_size = 128
     test_users = user_pos_test.keys()
@@ -177,10 +185,10 @@ def evaluate(sess, model, which_set = "test"):
         user_batch_rating_uid = zip(user_batch_rating, user_batch)
         batch_result = pool.map(which_func, user_batch_rating_uid)
         for re in batch_result:
-            result += [re[2], re[5]]
+            result += [re[2], re[5], re[6]]
     pool.close()
     ret = result / test_user_num
-    ret = zip(["p_100", "ndcg_100"], list(ret))
+    ret = zip(["p_100", "ndcg_100", "mae"], list(ret))
     return ret
 
 
@@ -217,7 +225,7 @@ def main():
     result_test = evaluate(sess, discriminator, "test")
     print("epoch ", epoch, "dis train: ", result_train, "dis test:", result_test)
 
-    #generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
+    generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
 
     # creating initial data values
     # of x and y
@@ -225,8 +233,8 @@ def main():
     y_values_train =  np.array([result_train[1][1]])
     y_values_test =  np.array([result_test[1][1]])
 
-    for epoch in range(5):
-        generate_dns(sess, discriminator, DIS_TRAIN_FILE)  # dynamic negative sample
+    for epoch in range(50):
+        #generate_dns(sess, discriminator, DIS_TRAIN_FILE)  # dynamic negative sample
         with open(DIS_TRAIN_FILE)as fin:
             for line in fin:
                 line = line.split()
