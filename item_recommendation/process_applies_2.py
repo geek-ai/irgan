@@ -44,11 +44,11 @@ for l in ftest_input:
 ftrain = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/train", "w")
 ftest = open("/Users/fzafari/Projects/innovation/irgan/item_recommendation/SEEK_AU_202109_100_5K/test", "w")
 
-for c, applies in sorted(capplies_train, key=lambda k: len(capplies_train[k])).items():
+for c, applies in capplies_train.items():
     for j in applies:
         ftrain.write(candidates_map[c] + "  " + jobs_map[j] + " " + "1\n")
 
-for c, applies in sorted(capplies_test, key=lambda k: len(capplies_test[k])).items():
+for c, applies in capplies_test.items():
     for j in applies:
         ftest.write(candidates_map[c] + "  " + jobs_map[j] + " " + "1\n")
 
