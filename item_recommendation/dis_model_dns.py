@@ -33,6 +33,7 @@ class DIS():
         self.u = tf.placeholder(tf.int32)
         self.pos = tf.placeholder(tf.int32)
         self.neg = tf.placeholder(tf.int32)
+        self.real = tf.placeholder(tf.float32)
 
         self.u_embedding = tf.nn.embedding_lookup(self.user_embeddings, self.u)
         self.pos_embedding = tf.nn.embedding_lookup(self.item_embeddings, self.pos)
@@ -40,14 +41,13 @@ class DIS():
         self.neg_embedding = tf.nn.embedding_lookup(self.item_embeddings, self.neg)
         #self.neg_bias = tf.gather(self.item_bias, self.neg)
 
-        self.pre_logits = tf.sigmoid(
-            tf.reduce_sum(tf.multiply(self.u_embedding, self.pos_embedding - self.neg_embedding),
-                          1)) #+ self.pos_bias - self.neg_bias)
-        self.pre_loss = -tf.reduce_mean(tf.log(self.pre_logits)) + self.lamda * (
+        self.pre_logits = tf.reduce_sum(tf.square(self.real - tf.multiply(self.u_embedding, self.pos_embedding)),
+                          1) #+ self.pos_bias - self.neg_bias)
+        self.pre_loss = self.pre_logits + self.lamda * (
             tf.nn.l2_loss(self.u_embedding) +
-            tf.nn.l2_loss(self.pos_embedding) +
+            tf.nn.l2_loss(self.pos_embedding)
             #tf.nn.l2_loss(self.pos_bias) +
-            tf.nn.l2_loss(self.neg_embedding)
+            #tf.nn.l2_loss(self.neg_embedding)
             #tf.nn.l2_loss(self.neg_bias)
         )
 

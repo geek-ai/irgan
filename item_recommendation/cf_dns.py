@@ -28,6 +28,7 @@ DIS_MODEL_FILE = workdir + "model_dns.pkl"
 user_pos_train = {}
 all_items_ids = []
 all_user_ids = []
+NUM_RATINGS_TRAIN = 0
 with open(workdir + train_filename)as fin:
     for line in fin:
         line = line.split()
@@ -43,8 +44,10 @@ with open(workdir + train_filename)as fin:
             all_items_ids.append(iid)
         if uid not in all_user_ids:
             all_user_ids.append(uid)
+        NUM_RATINGS_TRAIN += 1
 
 user_pos_test = {}
+NUM_RATINGS_TEST = 0
 with open(workdir + test_filename)as fin:
     for line in fin:
         line = line.split()
@@ -60,6 +63,7 @@ with open(workdir + test_filename)as fin:
             all_items_ids.append(iid)
         if uid not in all_user_ids:
             all_user_ids.append(uid)
+        NUM_RATINGS_TEST += 1
 
 USER_NUM = len(user_pos_train)
 ITEM_NUM = len(all_items_ids)
@@ -150,7 +154,7 @@ def simple_test_one_user_train(x):
     for i, j in item_sort:
         if i in user_pos_train[u]:
             r.append(1)
-            mae += np.square(1-j)
+            mae += np.abs(1-j)
         else:
             r.append(0)
 
@@ -165,10 +169,13 @@ def simple_test_one_user_train(x):
     return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, mae])
 
 def evaluate(sess, model, which_set = "test"):
+    num_ratings = 0
     if which_set == "test":
         which_func = simple_test_one_user_test
+        num_ratings = NUM_RATINGS_TEST
     else:
         which_func = simple_test_one_user_train
+        num_ratings = NUM_RATINGS_TRAIN
     result = np.array([0.] * 3)
     pool = multiprocessing.Pool(cores)
     batch_size = 128
@@ -187,8 +194,9 @@ def evaluate(sess, model, which_set = "test"):
         for re in batch_result:
             result += [re[2], re[5], re[6]]
     pool.close()
-    ret = result / test_user_num
-    ret = zip(["p_100", "ndcg_100", "mae"], list(ret))
+    ret = (np.array(result.tolist()[:2]) / test_user_num).tolist()
+    ret.append((np.array(result.tolist()[2]) / num_ratings).tolist())
+    ret = zip(["p_100", "ndcg_100", "mae"], ret)
     return ret
 
 
@@ -243,7 +251,10 @@ def main():
                 j = int(line[2])
                 _ = sess.run(discriminator.d_updates,
                              feed_dict={discriminator.u: [u], discriminator.pos: [i],
-                                        discriminator.neg: [j]})
+                                        discriminator.neg: [0], discriminator.real: 1.0})
+                _ = sess.run(discriminator.d_updates,
+                             feed_dict={discriminator.u: [u], discriminator.pos: [j],
+                                        discriminator.neg: [0], discriminator.real: 0.0})
 
         result_train = evaluate(sess, discriminator, "train")
         result_test = evaluate(sess, discriminator, "test")
