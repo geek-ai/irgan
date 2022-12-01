@@ -25,7 +25,7 @@ DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 # Load data
 #########################################################################################
 user_pos_train = {}
-with open(workdir + 'movielens-100k-train.txt')as fin:
+with open(workdir + 'train')as fin:
     for line in fin:
         line = line.split()
         uid = int(line[0])
@@ -38,7 +38,7 @@ with open(workdir + 'movielens-100k-train.txt')as fin:
                 user_pos_train[uid] = [iid]
 
 user_pos_test = {}
-with open(workdir + 'movielens-100k-test.txt')as fin:
+with open(workdir + 'test')as fin:
     for line in fin:
         line = line.split()
         uid = int(line[0])

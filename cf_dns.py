@@ -15,8 +15,8 @@ ITEM_NUM = 1683
 DNS_K = 5
 all_items = set(range(ITEM_NUM))
 workdir = 'ml-100k/'
-train_filename='movielens-100k-train.txt'
-test_filename='movielens-100k-test.txt'
+train_filename='train'
+test_filename='test'
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
 #########################################################################################

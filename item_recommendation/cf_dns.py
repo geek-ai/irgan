@@ -13,7 +13,7 @@ cores = multiprocessing.cpu_count()/2
 #########################################################################################
 EMB_DIM = 5
 DNS_K = 5
-workdir = 'seek/'
+workdir = 'ml-100k/'
 train_filename = 'train'
 test_filename = 'test'
 
