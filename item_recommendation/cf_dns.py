@@ -1,5 +1,7 @@
 import tensorflow as tf
 from dis_model_dns import DIS
+from mf_model import MF
+
 import cPickle
 import numpy as np
 import multiprocessing
@@ -7,6 +9,9 @@ import time
 import matplotlib.pyplot as plt
 
 cores = multiprocessing.cpu_count()/2
+
+RUN_MF = False
+RUN_DIS = True
 
 #########################################################################################
 # Hyper-parameters
@@ -199,7 +204,7 @@ def evaluate(sess, model, which_set = "test"):
 
 def generate_uniform(filename):
     data = []
-    print('uniform negative sampling...')
+    #print('uniform negative sampling...')
     for u in user_pos_train:
         pos = user_pos_train[u]
         candidates = list(all_items - set(pos))
@@ -216,6 +221,7 @@ def generate_uniform(filename):
 def main():
     np.random.seed(70)
     param = None
+    mf = MF(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=param, initdelta=0.05, learning_rate=0.05)
     discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=param, initdelta=0.05, learning_rate=0.05)
 
     config = tf.ConfigProto()
@@ -223,23 +229,30 @@ def main():
     sess = tf.Session(config=config)
     sess.run(tf.global_variables_initializer())
 
-    dis_log = open(workdir + 'dis_log_dns.txt', 'w')
-
     epoch = 0
-    result_train = evaluate(sess, discriminator, "train")
-    result_test = evaluate(sess, discriminator, "test")
-    print("epoch ", epoch, "dis train: ", result_train, "dis test:", result_test)
+    if RUN_MF:
+        result_train_mf = evaluate(sess, mf, "train")
+        result_test_mf = evaluate(sess, mf, "test")
+    if RUN_DIS:
+        result_train_dis = evaluate(sess, discriminator, "train")
+        result_test_dis = evaluate(sess, discriminator, "test")
+
+    if RUN_MF: print("epoch MF", epoch, "dis train: ", result_train_mf, "dis test:", result_test_mf)
+    if RUN_DIS: print("epoch DIS", epoch, "dis train: ", result_train_dis, "dis test:", result_test_dis)
 
     generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
 
     # creating initial data values
     # of x and y
     x_values = np.array([0])
-    y_values_train =  np.array([result_train[0][1]])
-    y_values_test =  np.array([result_test[0][1]])
+    if RUN_MF:
+        y_values_train_mf =  np.array([result_train_mf[0][1]])
+        y_values_test_mf =  np.array([result_test_mf[0][1]])
+    if RUN_DIS:
+        y_values_train_dis =  np.array([result_train_dis[0][1]])
+        y_values_test_dis =  np.array([result_test_dis[0][1]])
 
     for epoch in range(30):
-        #generate_dns(sess, discriminator, DIS_TRAIN_FILE)  # dynamic negative sample
         with open(DIS_TRAIN_FILE)as fin:
             for line in fin:
                 line = line.split()
@@ -247,31 +260,50 @@ def main():
                 i = int(line[1])
                 j = int(line[2])
                 #positive:
-                _ = sess.run(discriminator.d_updates,
-                             feed_dict={discriminator.u: [u], discriminator.pos: [i], discriminator.real: [1.0]})
-                _ = sess.run(discriminator.d_updates,
-                             feed_dict={discriminator.u: [u], discriminator.pos: [j], discriminator.real: [0.0]})
+                if RUN_MF:
+                    _ = sess.run(mf.d_updates,
+                                 feed_dict={mf.u: [u], mf.pos: [i], mf.real: [1.0]})
+                    _ = sess.run(mf.d_updates,
+                                 feed_dict={mf.u: [u], mf.pos: [j], mf.real: [0.0]})
+                if RUN_DIS:
+                    _ = sess.run(discriminator.d_updates,
+                                 feed_dict={discriminator.u: [u], discriminator.pos: [i], discriminator.neg: [j]})
 
-        result_train = evaluate(sess, discriminator, "train")
-        result_test = evaluate(sess, discriminator, "test")
-        print("epoch ", epoch+1, "dis train: ", result_train, "dis test:", result_test)
+        if RUN_MF:
+            result_train_mf = evaluate(sess, mf, "train")
+            result_test_mf = evaluate(sess, mf, "test")
+        if RUN_DIS:
+            result_train_dis = evaluate(sess, discriminator, "train")
+            result_test_dis = evaluate(sess, discriminator, "test")
+
+        if RUN_MF: print("epoch MF", epoch+1, "dis train: ", result_train_mf, "dis test:", result_test_mf)
+        if RUN_DIS: print("epoch DIS", epoch+1, "dis train: ", result_train_dis, "dis test:", result_test_dis)
         x_values = np.append(x_values, epoch+1)
-        y_values_train = np.append(y_values_train, result_train[0][1])
-        y_values_test = np.append(y_values_test, result_test[0][1])
+        if RUN_MF:
+            y_values_train_mf = np.append(y_values_train_mf, result_train_mf[0][1])
+            y_values_test_mf = np.append(y_values_test_dis, result_test_mf[0][1])
+        if RUN_DIS:
+            y_values_train_dis = np.append(y_values_train_mf, result_train_mf[0][1])
+            y_values_test_dis = np.append(y_values_test_dis, result_test_mf[0][1])
 
 
-        buf = '\t'.join([str(x) for x in result_train])
-        dis_log.write(str(epoch) + '\t' + buf + '\n')
-        dis_log.flush()
+    if RUN_MF:
+        line1, = plt.plot(x_values, y_values_train_mf, label = "P@100 Train MF")
+        line1.set_xdata(x_values)
+        line1.set_ydata(y_values_train_mf)
+    if RUN_DIS:
+        line2, = plt.plot(x_values, y_values_train_dis, label = "P@100 Train DIS")
+        line2.set_xdata(x_values)
+        line2.set_ydata(y_values_train_dis)
 
-    dis_log.close()
-
-    line1, = plt.plot(x_values, y_values_train, label = "P@100 Train")
-    line1.set_xdata(x_values)
-    line1.set_ydata(y_values_train)
-    line2, = plt.plot(x_values, y_values_test, label = "P@100 Test")
-    line2.set_xdata(x_values)
-    line2.set_ydata(y_values_test)
+    if RUN_MF:
+        line3, = plt.plot(x_values, y_values_test_mf, label = "P@100 Test MF")
+        line3.set_xdata(x_values)
+        line3.set_ydata(y_values_test_mf)
+    if RUN_DIS:
+        line4, = plt.plot(x_values, y_values_test_dis, label = "P@100 Test DIS")
+        line4.set_xdata(x_values)
+        line4.set_ydata(y_values_test_dis)
 
     plt.title("Model convergence", fontsize=20)
 
