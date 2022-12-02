@@ -281,9 +281,9 @@ def main():
         x_values = np.append(x_values, epoch+1)
         if RUN_MF:
             y_values_train_mf = np.append(y_values_train_mf, result_train_mf[0][1])
-            y_values_train_mf = np.append(y_values_train_mf, result_train_mf[0][1])
+            y_values_test_mf = np.append(y_values_test_mf, result_test_mf[0][1])
         if RUN_DIS:
-            y_values_test_dis = np.append(y_values_test_dis, result_test_dis[0][1])
+            y_values_train_dis = np.append(y_values_train_dis, result_train_dis[0][1])
             y_values_test_dis = np.append(y_values_test_dis, result_test_dis[0][1])
 
 
