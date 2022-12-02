@@ -9,7 +9,7 @@ job_index_map = dict()
 
 num_cands = 0
 num_jobs = 0
-max_cands = 1000
+max_cands = 100
 for x, l in enumerate(ftrain_input):
     line = l.split(",")
     c = line[2]
