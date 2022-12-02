@@ -19,16 +19,16 @@ RUN_DIS = True
 #########################################################################################
 EMB_DIM = 5
 DNS_K = 5
-workdir = 'ml-100k/'
-train_filename = 'train'
-test_filename = 'test'
+workdir = 'seek/'
+train_filename = 'applies.csv.train'
+test_filename = 'applies.csv.test'
 
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
-dataset_deliminator = None
-user_index_original_dataset = 0
-item_index_original_dataset = 1
-rate_index_original_dataset = 2
+dataset_deliminator = ","
+user_index_original_dataset = 2
+item_index_original_dataset = 3
+rate_index_original_dataset = 4
 #########################################################################################
 # Load data
 #########################################################################################
@@ -55,7 +55,8 @@ with open(workdir + train_filename)as fin:
             j_index += 1
         uid = int(uid_to_index[line[user_index_original_dataset]])
         iid = int(jid_to_index[line[item_index_original_dataset]])
-        r = float(line[rate_index_original_dataset])
+        #r = float(line[rate_index_original_dataset])
+        r = 1
         if r > 0:
             if uid in user_pos_train:
                 user_pos_train[uid].append(iid)
@@ -83,7 +84,8 @@ with open(workdir + test_filename)as fin:
             j_index += 1
         uid = int(uid_to_index[line[user_index_original_dataset]])
         iid = int(jid_to_index[line[item_index_original_dataset]])
-        r = float(line[rate_index_original_dataset])
+        #r = float(line[rate_index_original_dataset])
+        r = 1
         if r > 0:
             if uid in user_pos_test:
                 user_pos_test[uid].append(iid)
