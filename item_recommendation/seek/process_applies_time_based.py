@@ -58,7 +58,7 @@ for c, c_index in candidates_map.items():
         if index > (max_cands / 5):
             if len(jobs_set.intersection(set(capplies_train[c] + capplies_test[c]))) <= 1:
                 continue
-            if len(set(capplies_train[c] + capplies_test[c])) > 20:
+            if len(set(capplies_train[c] + capplies_test[c])) > 8:
                 continue
         if c not in new_cands_map:
             new_cands_map[c] = str(cand_index)
