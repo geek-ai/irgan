@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 cores = multiprocessing.cpu_count()/2
 
+TRAIN = False
 RUN_MF = True
 RUN_DIS = True
 
@@ -286,15 +287,15 @@ def main():
             y_values_train_dis = np.append(y_values_train_dis, result_train_dis[0][1])
             y_values_test_dis = np.append(y_values_test_dis, result_test_dis[0][1])
 
-
-    if RUN_MF:
-        line1, = plt.plot(x_values, y_values_train_mf, label = "P@100 Train MF")
-        line1.set_xdata(x_values)
-        line1.set_ydata(y_values_train_mf)
-    if RUN_DIS:
-        line2, = plt.plot(x_values, y_values_train_dis, label = "P@100 Train DIS")
-        line2.set_xdata(x_values)
-        line2.set_ydata(y_values_train_dis)
+    if TRAIN:
+        if RUN_MF:
+            line1, = plt.plot(x_values, y_values_train_mf, label = "P@100 Train MF")
+            line1.set_xdata(x_values)
+            line1.set_ydata(y_values_train_mf)
+        if RUN_DIS:
+            line2, = plt.plot(x_values, y_values_train_dis, label = "P@100 Train DIS")
+            line2.set_xdata(x_values)
+            line2.set_ydata(y_values_train_dis)
 
     if RUN_MF:
         line3, = plt.plot(x_values, y_values_test_mf, label = "P@100 Test MF")
