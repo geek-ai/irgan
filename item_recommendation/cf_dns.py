@@ -248,7 +248,9 @@ def main():
                 j = int(line[2])
                 #positive:
                 _ = sess.run(discriminator.d_updates,
-                             feed_dict={discriminator.u: [u], discriminator.pos: [i], discriminator.neg: [j]})
+                             feed_dict={discriminator.u: [u], discriminator.pos: [i], discriminator.real: [1.0]})
+                _ = sess.run(discriminator.d_updates,
+                             feed_dict={discriminator.u: [u], discriminator.pos: [j], discriminator.real: [0.0]})
 
         result_train = evaluate(sess, discriminator, "train")
         result_test = evaluate(sess, discriminator, "test")
