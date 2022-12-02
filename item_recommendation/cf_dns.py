@@ -19,25 +19,43 @@ RUN_DIS = True
 #########################################################################################
 EMB_DIM = 5
 DNS_K = 5
-workdir = 'seek/'
+workdir = 'ml-100k/'
 train_filename = 'train'
 test_filename = 'test'
 
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
+dataset_deliminator = None
+user_index_original_dataset = 0
+item_index_original_dataset = 1
+rate_index_original_dataset = 2
 #########################################################################################
 # Load data
 #########################################################################################
 user_pos_train = {}
 all_items_ids = []
 all_user_ids = []
+uid_to_index = {}
+jid_to_index = {}
+
+u_index = 0
+j_index = 0
 NUM_RATINGS_TRAIN = 0
 with open(workdir + train_filename)as fin:
     for line in fin:
-        line = line.split()
-        uid = int(line[0])
-        iid = int(line[1])
-        r = float(line[2])
+        if dataset_deliminator == None:
+            line = line.split()
+        else:
+            line = line.split(dataset_deliminator)
+        if line[user_index_original_dataset] not in uid_to_index:
+            uid_to_index[line[user_index_original_dataset]] = u_index
+            u_index += 1
+        if line[item_index_original_dataset] not in jid_to_index:
+            jid_to_index[line[item_index_original_dataset]] = j_index
+            j_index += 1
+        uid = int(uid_to_index[line[user_index_original_dataset]])
+        iid = int(jid_to_index[line[item_index_original_dataset]])
+        r = float(line[rate_index_original_dataset])
         if r > 0:
             if uid in user_pos_train:
                 user_pos_train[uid].append(iid)
@@ -53,10 +71,19 @@ user_pos_test = {}
 NUM_RATINGS_TEST = 0
 with open(workdir + test_filename)as fin:
     for line in fin:
-        line = line.split()
-        uid = int(line[0])
-        iid = int(line[1])
-        r = float(line[2])
+        if dataset_deliminator == None:
+            line = line.split()
+        else:
+            line = line.split(dataset_deliminator)
+        if line[user_index_original_dataset] not in uid_to_index:
+            uid_to_index[line[user_index_original_dataset]] = u_index
+            u_index += 1
+        if line[item_index_original_dataset] not in jid_to_index:
+            jid_to_index[line[item_index_original_dataset]] = j_index
+            j_index += 1
+        uid = int(uid_to_index[line[user_index_original_dataset]])
+        iid = int(jid_to_index[line[item_index_original_dataset]])
+        r = float(line[rate_index_original_dataset])
         if r > 0:
             if uid in user_pos_test:
                 user_pos_test[uid].append(iid)
