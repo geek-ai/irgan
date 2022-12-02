@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 cores = multiprocessing.cpu_count()/2
 
-RUN_MF = False
+RUN_MF = True
 RUN_DIS = True
 
 #########################################################################################
