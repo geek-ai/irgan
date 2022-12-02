@@ -9,7 +9,7 @@ job_index_map = dict()
 
 num_cands = 0
 num_jobs = 0
-max_cands = 100
+max_cands = 1000
 for x, l in enumerate(ftrain_input):
     line = l.split(",")
     c = line[2]
@@ -51,8 +51,15 @@ new_cands_map = {}
 job_index = 0
 cand_index = 0
 
+jobs_set = set()
+index = 0
 for c, c_index in candidates_map.items():
     if c in capplies_train and c in capplies_test:
+        if index > (max_cands / 5):
+            if len(jobs_set.intersection(set(capplies_train[c] + capplies_test[c]))) <= 1:
+                continue
+            if len(set(capplies_train[c] + capplies_test[c])) > 20:
+                continue
         if c not in new_cands_map:
             new_cands_map[c] = str(cand_index)
             cand_index += 1
@@ -66,13 +73,14 @@ for c, c_index in candidates_map.items():
                 new_jobs_map[j] = str(job_index)
                 job_index += 1
             ftest.write(new_cands_map[c] + "  " + new_jobs_map[j] + " " + "1\n")
-
         num_cands_count += 1
+        jobs_set = jobs_set.union(set(capplies_train[c] + capplies_test[c]))
+        index += 1
     if num_cands_count == max_cands:
         break
 
-print("num users:", len(candidates_map.keys()))
-print("num jobs:", len(jobs_map.keys()))
+print("num users:", len(new_cands_map.keys()))
+print("num jobs:", len(new_jobs_map.keys()))
 
 ftrain.flush()
 ftest.flush()
