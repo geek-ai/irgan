@@ -9,8 +9,7 @@ job_index_map = dict()
 
 num_cands = 0
 num_jobs = 0
-max_applies_train = 10000
-max_applies_test = 1000
+max_cands = 1000
 for x, l in enumerate(ftrain_input):
     line = l.split(",")
     c = line[2]
@@ -24,8 +23,6 @@ for x, l in enumerate(ftrain_input):
     if j not in jobs_map:
         jobs_map[j] = str(num_jobs)
         num_jobs += 1
-    if x == max_applies_train:
-        break
 
 capplies_test = dict()
 
@@ -44,19 +41,38 @@ for x, l in enumerate(ftest_input):
     if j not in jobs_map:
         jobs_map[j] = str(num_jobs)
         num_jobs += 1
-    if x == max_applies_test:
-        break
 
 ftrain = open("train", "w")
 ftest = open("test", "w")
 
-for c, applies in capplies_train.items():
-    for j in applies:
-        ftrain.write(candidates_map[c] + "  " + jobs_map[j] + " " + "1\n")
+num_cands_count = 0
+new_jobs_map = {}
+new_cands_map = {}
+job_index = 0
+cand_index = 0
 
-for c, applies in capplies_test.items():
-    for j in applies:
-        ftest.write(candidates_map[c] + "  " + jobs_map[j] + " " + "1\n")
+for c, c_index in candidates_map.items():
+    if c in capplies_train and c in capplies_test:
+        if c not in new_cands_map:
+            new_cands_map[c] = str(cand_index)
+            cand_index += 1
+        for j in capplies_train[c]:
+            if j not in new_jobs_map:
+                new_jobs_map[j] = str(job_index)
+                job_index += 1
+            ftrain.write(new_cands_map[c] + "  " + new_jobs_map[j] + " " + "1\n")
+        for j in capplies_test[c]:
+            if j not in new_jobs_map:
+                new_jobs_map[j] = str(job_index)
+                job_index += 1
+            ftest.write(new_cands_map[c] + "  " + new_jobs_map[j] + " " + "1\n")
+
+        num_cands_count += 1
+    if num_cands_count == max_cands:
+        break
+
+print("num users:", len(candidates_map.keys()))
+print("num jobs:", len(jobs_map.keys()))
 
 ftrain.flush()
 ftest.flush()

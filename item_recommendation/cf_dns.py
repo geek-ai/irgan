@@ -18,7 +18,7 @@ RUN_DIS = True
 #########################################################################################
 EMB_DIM = 5
 DNS_K = 5
-workdir = 'ml-100k/'
+workdir = 'seek/'
 train_filename = 'train'
 test_filename = 'test'
 
@@ -67,7 +67,7 @@ with open(workdir + test_filename)as fin:
             all_user_ids.append(uid)
         NUM_RATINGS_TEST += 1
 
-USER_NUM = len(user_pos_train)
+USER_NUM = len(all_user_ids)
 ITEM_NUM = len(all_items_ids)
 print(USER_NUM, ITEM_NUM)
 all_items = set(range(ITEM_NUM))
