@@ -324,8 +324,8 @@ def main():
                 best_test_gen = result_test_gen
                 generator.save_model(sess, workdir + "gan_generator.pkl")
 
-        print("epoch GEN", epoch, "gen train: ", best_train_gen, "gen test:", best_test_gen)
-        print("epoch DIS", epoch, "dis train: ", best_train_dis, "dis test:", best_test_dis)
+        print("epoch GEN", epoch, "gen train: ", result_train_gen, "gen test:", result_test_gen)
+        print("epoch DIS", epoch, "dis train: ", result_train_dis, "dis test:", result_test_dis)
 
         x_values = np.append(x_values, epoch)
 
