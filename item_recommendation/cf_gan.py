@@ -311,8 +311,8 @@ def main():
                 best_test = result_test_gen
                 generator.save_model(sess, workdir + "gan_generator.pkl")
 
-            print("epoch GEN", ((epoch*num_iterations) + num_iterations_gen) + 1, "gen train: ", result_train_gen, "gen test:", result_test_gen)
-            x_values = np.append(x_values, ((epoch*num_iterations) + num_iterations_gen) + 1)
+            print("epoch GEN", ((epoch*num_iterations_gen) + g_epoch) + 1, "gen train: ", result_train_gen, "gen test:", result_test_gen)
+            x_values = np.append(x_values, ((epoch*num_iterations_gen) + g_epoch) + 1)
 
             y_values_train_gen = np.append(y_values_train_gen, best_train[0][1])
             y_values_test_gen = np.append(y_values_test_gen, best_test[0][1])
