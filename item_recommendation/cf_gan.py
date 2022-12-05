@@ -5,6 +5,8 @@ import cPickle
 import numpy as np
 import utils as ut
 import multiprocessing
+import matplotlib.pyplot as plt
+from mf_model import MF
 
 cores = multiprocessing.cpu_count()
 
@@ -15,8 +17,8 @@ EMB_DIM = 5
 DNS_K = 5
 INIT_DELTA = 0.05
 BATCH_SIZE = 16
+TRAIN = False
 workdir = 'ml-100k/'
-
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
 dataset_deliminator = None
@@ -237,75 +239,99 @@ def main():
     sess = tf.Session(config=config)
     sess.run(tf.global_variables_initializer())
 
-    print "gen ", evaluate(sess, generator, "Train")
-    print "dis ", evaluate(sess, discriminator, "Train")
+    epoch = 0
+    result_train_gen = evaluate(sess, generator, "train")
+    result_test_gen = evaluate(sess, generator, "test")
 
-    dis_log = open(workdir + 'dis_log.txt', 'w')
-    gen_log = open(workdir + 'gen_log.txt', 'w')
+    print("epoch GEN", epoch, "gen train: ", result_train_gen, "gen test:", result_test_gen)
 
+    # creating initial data values
+    # of x and y
+    x_values = np.array([0])
+    y_values_train_gen =  np.array([result_train_gen[0][1]])
+    y_values_test_gen =  np.array([result_test_gen[0][1]])
+    best_train = result_train_gen
+    best_test = result_test_gen
+
+    num_iterations = 15
+    num_iterations_dis = 100
+    num_iterations_gen = 50
     # minimax training
-    best = 0.
-    for epoch in range(15):
-        if epoch >= 0:
-            for d_epoch in range(100):
-                if d_epoch % 5 == 0:
-                    generate_for_d(sess, generator, DIS_TRAIN_FILE)
-                    train_size = ut.file_len(DIS_TRAIN_FILE)
-                index = 1
-                while True:
-                    if index > train_size:
-                        break
-                    if index + BATCH_SIZE <= train_size + 1:
-                        input_user, input_item, input_label = ut.get_batch_data(DIS_TRAIN_FILE, index, BATCH_SIZE)
-                    else:
-                        input_user, input_item, input_label = ut.get_batch_data(DIS_TRAIN_FILE, index,
-                                                                                train_size - index + 1)
-                    index += BATCH_SIZE
+    for epoch in range(num_iterations):
+        for d_epoch in range(num_iterations_dis):
+            if d_epoch % 5 == 0:
+                generate_for_d(sess, generator, DIS_TRAIN_FILE)
+                train_size = ut.file_len(DIS_TRAIN_FILE)
+            index = 1
+            while True:
+                if index > train_size:
+                    break
+                if index + BATCH_SIZE <= train_size + 1:
+                    input_user, input_item, input_label = ut.get_batch_data(DIS_TRAIN_FILE, index, BATCH_SIZE)
+                else:
+                    input_user, input_item, input_label = ut.get_batch_data(DIS_TRAIN_FILE, index,
+                                                                            train_size - index + 1)
+                index += BATCH_SIZE
 
-                    _ = sess.run(discriminator.d_updates,
-                                 feed_dict={discriminator.u: input_user, discriminator.i: input_item,
-                                            discriminator.label: input_label})
+                _ = sess.run(discriminator.d_updates,
+                             feed_dict={discriminator.u: input_user, discriminator.i: input_item,
+                                        discriminator.label: input_label})
 
-            # Train G
-            for g_epoch in range(50):  # 50
-                for u in user_pos_train:
-                    sample_lambda = 0.2
-                    pos = user_pos_train[u]
+        # Train G
+        for g_epoch in range(num_iterations_gen):  # 50
+            for u in user_pos_train:
+                sample_lambda = 0.2
+                pos = user_pos_train[u]
 
-                    rating = sess.run(generator.all_logits, {generator.u: u})
-                    exp_rating = np.exp(rating)
-                    prob = exp_rating / np.sum(exp_rating)  # prob is generator distribution p_\theta
+                rating = sess.run(generator.all_logits, {generator.u: u})
+                exp_rating = np.exp(rating)
+                prob = exp_rating / np.sum(exp_rating)  # prob is generator distribution p_\theta
 
-                    pn = (1 - sample_lambda) * prob
-                    pn[pos] += sample_lambda * 1.0 / len(pos)
-                    # Now, pn is the Pn in importance sampling, prob is generator distribution p_\theta
+                pn = (1 - sample_lambda) * prob
+                pn[pos] += sample_lambda * 1.0 / len(pos)
+                # Now, pn is the Pn in importance sampling, prob is generator distribution p_\theta
 
-                    sample = np.random.choice(np.arange(ITEM_NUM), 2 * len(pos), p=pn)
-                    ###########################################################################
-                    # Get reward and adapt it with importance sampling
-                    ###########################################################################
-                    reward = sess.run(discriminator.reward, {discriminator.u: u, discriminator.i: sample})
-                    reward = reward * prob[sample] / pn[sample]
-                    ###########################################################################
-                    # Update G
-                    ###########################################################################
-                    _ = sess.run(generator.gan_updates,
-                                 {generator.u: u, generator.i: sample, generator.reward: reward})
+                sample = np.random.choice(np.arange(ITEM_NUM), 2 * len(pos), p=pn)
+                ###########################################################################
+                # Get reward and adapt it with importance sampling
+                ###########################################################################
+                reward = sess.run(discriminator.reward, {discriminator.u: u, discriminator.i: sample})
+                reward = reward * prob[sample] / pn[sample]
+                ###########################################################################
+                # Update G
+                ###########################################################################
+                _ = sess.run(generator.gan_updates,
+                             {generator.u: u, generator.i: sample, generator.reward: reward})
 
-                result = evaluate(sess, generator, "train")
-                print "epoch ", epoch, "gen: ", result
-                buf = '\t'.join([str(x) for x in result])
-                gen_log.write(str(epoch) + '\t' + buf + '\n')
-                gen_log.flush()
+            result_train_gen = evaluate(sess, generator, "train")
+            result_test_gen = evaluate(sess, generator, "test")
 
-                p_5 = result[1]
-                if p_5 > best:
-                    print 'best: ', result
-                    best = p_5
-                    generator.save_model(sess, "ml-100k/gan_generator.pkl")
+            if result_train_gen[1] > best_train[1]:
+                best_train = result_train_gen
+                best_test = result_test_gen
+                generator.save_model(sess, workdir + "gan_generator.pkl")
 
-    gen_log.close()
-    dis_log.close()
+            print("epoch GEN", ((epoch*num_iterations) + num_iterations_gen) + 1, "gen train: ", result_train_gen, "gen test:", result_test_gen)
+            x_values = np.append(x_values, ((epoch*num_iterations) + num_iterations_gen) + 1)
+
+            y_values_train_gen = np.append(y_values_train_gen, best_train[0][1])
+            y_values_test_gen = np.append(y_values_test_gen, best_test[0][1])
+
+    if TRAIN:
+        line1, = plt.plot(x_values, y_values_train_gen, label = "P@100 Train DIS")
+        line1.set_xdata(x_values)
+        line1.set_ydata(y_values_train_gen)
+
+    line2, = plt.plot(x_values, y_values_test_gen, label = "P@100 Test DIS")
+    line2.set_xdata(x_values)
+    line2.set_ydata(y_values_test_gen)
+
+    plt.title("Model convergence", fontsize=20)
+
+    plt.xlabel("Iteration")
+    plt.ylabel("Model Performance")
+    plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':
