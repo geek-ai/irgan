@@ -20,8 +20,6 @@ RUN_DIS = True
 EMB_DIM = 5
 DNS_K = 5
 workdir = 'seek/'
-train_filename = 'train'
-test_filename = 'test'
 
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
@@ -41,7 +39,7 @@ jid_to_index = {}
 u_index = 0
 j_index = 0
 NUM_RATINGS_TRAIN = 0
-with open(workdir + train_filename)as fin:
+with open(workdir + 'train')as fin:
     for line in fin:
         if dataset_deliminator == None:
             line = line.split()
@@ -70,7 +68,7 @@ with open(workdir + train_filename)as fin:
 
 user_pos_test = {}
 NUM_RATINGS_TEST = 0
-with open(workdir + test_filename)as fin:
+with open(workdir + 'test')as fin:
     for line in fin:
         if dataset_deliminator == None:
             line = line.split()
