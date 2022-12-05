@@ -8,6 +8,7 @@ import multiprocessing
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from mf_model import MF
+from cf_dns import generate_uniform
 
 cores = multiprocessing.cpu_count()
 
@@ -21,6 +22,7 @@ BATCH_SIZE = 16
 TRAIN = False
 workdir = 'seek/'
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
+DIS_TRAIN_FILE_UNIFORM = workdir + 'dis-train-uniform.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
 dataset_deliminator = None
 user_index_original_dataset = 0
@@ -234,6 +236,8 @@ def main():
                     learning_rate=0.001)
     discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1 / BATCH_SIZE, param=None, initdelta=INIT_DELTA,
                         learning_rate=0.001)
+    mf = MF(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=param, initdelta=0.05, learning_rate=0.05)
+    generate_uniform(DIS_TRAIN_FILE_UNIFORM) # Uniformly sample negative examples
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -244,9 +248,12 @@ def main():
     result_test_gen = evaluate(sess, generator, "test")
     result_train_dis = evaluate(sess, discriminator, "train")
     result_test_dis = evaluate(sess, discriminator, "test")
+    result_train_mf = evaluate(sess, mf, "train")
+    result_test_mf = evaluate(sess, mf, "test")
 
     print("epoch GEN", "0" , "gen train: ", result_train_gen, "gen test:", result_test_gen)
     print("epoch DIS", "0", "dis train: ", result_train_dis, "dis test:", result_test_dis)
+    print("epoch MF", "0", "mf train: ", result_train_mf, "mf test:", result_test_mf)
 
     # creating initial data values
     # of x and y
@@ -324,8 +331,22 @@ def main():
                 best_test_gen = result_test_gen
                 generator.save_model(sess, workdir + "gan_generator.pkl")
 
+        with open(DIS_TRAIN_FILE_UNIFORM) as fmf:
+            for line in fmf:
+                line = line.split()
+                u = int(line[0])
+                i = int(line[1])
+                j = int(line[2])
+                #positive:
+                _ = sess.run(mf.d_updates,
+                             feed_dict={mf.u: [u], mf.pos: [i], mf.real: [1.0]})
+
+        result_train_mf = evaluate(sess, mf, "train")
+        result_test_mf = evaluate(sess, mf, "test")
+
         print("epoch GEN", epoch, "gen train: ", result_train_gen, "gen test:", result_test_gen)
         print("epoch DIS", epoch, "dis train: ", result_train_dis, "dis test:", result_test_dis)
+        print("epoch MF", epoch, "mf train: ", result_train_mf, "mf test:", result_test_mf)
 
         x_values = np.append(x_values, epoch)
 
@@ -333,6 +354,8 @@ def main():
         y_values_test_gen = np.append(y_values_test_gen, result_test_gen[0][1])
         y_values_train_dis = np.append(y_values_train_dis, result_train_dis[0][1])
         y_values_test_dis = np.append(y_values_test_dis, result_test_dis[0][1])
+        y_values_train_mf = np.append(y_values_train_mf, result_train_mf[0][1])
+        y_values_test_mf = np.append(y_values_test_mf, result_test_mf[0][1])
 
     if TRAIN:
         line1, = plt.plot(x_values, y_values_train_gen, label = "P@100 Train GEN")
@@ -341,13 +364,20 @@ def main():
         line2, = plt.plot(x_values, y_values_train_dis, label = "P@100 Train DIS")
         line2.set_xdata(x_values)
         line2.set_ydata(y_values_train_dis)
+        line3, = plt.plot(x_values, y_values_train_mf, label = "P@100 Train MF")
+        line3.set_xdata(x_values)
+        line3.set_ydata(y_values_train_mf)
 
-    line3, = plt.plot(x_values, y_values_test_gen, label = "P@100 Test GEN")
-    line3.set_xdata(x_values)
-    line3.set_ydata(y_values_test_gen)
-    line4, = plt.plot(x_values, y_values_test_dis, label = "P@100 Test DIS")
+    line4, = plt.plot(x_values, y_values_test_gen, label = "P@100 Test GEN")
     line4.set_xdata(x_values)
-    line4.set_ydata(y_values_test_dis)
+    line4.set_ydata(y_values_test_gen)
+    line5, = plt.plot(x_values, y_values_test_dis, label = "P@100 Test DIS")
+    line5.set_xdata(x_values)
+    line5.set_ydata(y_values_test_dis)
+    line6, = plt.plot(x_values, y_values_test_mf, label = "P@100 Test MF")
+    line6.set_xdata(x_values)
+    line6.set_ydata(y_values_test_mf)
+
 
     plt.title("Model convergence", fontsize=20)
 
