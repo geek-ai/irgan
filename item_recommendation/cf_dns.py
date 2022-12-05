@@ -249,8 +249,8 @@ def generate_uniform(filename):
 def main():
     np.random.seed(70)
     param = None
-    mf = MF(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.01, param=param, initdelta=0.05, learning_rate=0.05)
-    discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.01, param=param, initdelta=0.05, learning_rate=0.05)
+    mf = MF(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=param, initdelta=0.05, learning_rate=0.05)
+    discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=param, initdelta=0.05, learning_rate=0.05)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
