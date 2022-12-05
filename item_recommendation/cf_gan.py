@@ -12,43 +12,89 @@ cores = multiprocessing.cpu_count()
 # Hyper-parameters
 #########################################################################################
 EMB_DIM = 5
-USER_NUM = 943
-ITEM_NUM = 1683
-BATCH_SIZE = 16
+DNS_K = 5
 INIT_DELTA = 0.05
-
-all_items = set(range(ITEM_NUM))
+BATCH_SIZE = 16
 workdir = 'ml-100k/'
-DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 
+DIS_TRAIN_FILE = workdir + 'dis-train.txt'
+DIS_MODEL_FILE = workdir + "model_dns.pkl"
+dataset_deliminator = None
+user_index_original_dataset = 0
+item_index_original_dataset = 1
+rate_index_original_dataset = 2
 #########################################################################################
 # Load data
 #########################################################################################
 user_pos_train = {}
+all_items_ids = []
+all_user_ids = []
+uid_to_index = {}
+jid_to_index = {}
+
+u_index = 0
+j_index = 0
+NUM_RATINGS_TRAIN = 0
 with open(workdir + 'train')as fin:
     for line in fin:
-        line = line.split()
-        uid = int(line[0])
-        iid = int(line[1])
-        r = float(line[2])
-        if r > 3.99:
+        if dataset_deliminator == None:
+            line = line.split()
+        else:
+            line = line.split(dataset_deliminator)
+        if line[user_index_original_dataset] not in uid_to_index:
+            uid_to_index[line[user_index_original_dataset]] = u_index
+            u_index += 1
+        if line[item_index_original_dataset] not in jid_to_index:
+            jid_to_index[line[item_index_original_dataset]] = j_index
+            j_index += 1
+        uid = int(uid_to_index[line[user_index_original_dataset]])
+        iid = int(jid_to_index[line[item_index_original_dataset]])
+        #r = float(line[rate_index_original_dataset])
+        r = 1
+        if r > 0:
             if uid in user_pos_train:
                 user_pos_train[uid].append(iid)
             else:
                 user_pos_train[uid] = [iid]
+        if iid not in all_items_ids:
+            all_items_ids.append(iid)
+        if uid not in all_user_ids:
+            all_user_ids.append(uid)
+        NUM_RATINGS_TRAIN += 1
 
 user_pos_test = {}
+NUM_RATINGS_TEST = 0
 with open(workdir + 'test')as fin:
     for line in fin:
-        line = line.split()
-        uid = int(line[0])
-        iid = int(line[1])
-        r = float(line[2])
-        if r > 3.99:
+        if dataset_deliminator == None:
+            line = line.split()
+        else:
+            line = line.split(dataset_deliminator)
+        if line[user_index_original_dataset] not in uid_to_index:
+            uid_to_index[line[user_index_original_dataset]] = u_index
+            u_index += 1
+        if line[item_index_original_dataset] not in jid_to_index:
+            jid_to_index[line[item_index_original_dataset]] = j_index
+            j_index += 1
+        uid = int(uid_to_index[line[user_index_original_dataset]])
+        iid = int(jid_to_index[line[item_index_original_dataset]])
+        #r = float(line[rate_index_original_dataset])
+        r = 1
+        if r > 0:
             if uid in user_pos_test:
                 user_pos_test[uid].append(iid)
             else:
                 user_pos_test[uid] = [iid]
+        if iid not in all_items_ids:
+            all_items_ids.append(iid)
+        if uid not in all_user_ids:
+            all_user_ids.append(uid)
+        NUM_RATINGS_TEST += 1
+
+USER_NUM = len(all_user_ids)
+ITEM_NUM = len(all_items_ids)
+print(USER_NUM, ITEM_NUM)
+all_items = set(range(ITEM_NUM))
 
 all_users = user_pos_train.keys()
 all_users.sort()
@@ -142,6 +188,7 @@ def generate_for_d(sess, model, filename):
 def main():
     print "load model..."
     param = cPickle.load(open(workdir + "model_dns_ori.pkl"))
+    param = None
     generator = GEN(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.0 / BATCH_SIZE, param=param, initdelta=INIT_DELTA,
                     learning_rate=0.001)
     discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1 / BATCH_SIZE, param=None, initdelta=INIT_DELTA,
