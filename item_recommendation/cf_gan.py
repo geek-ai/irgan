@@ -242,8 +242,11 @@ def main():
     epoch = 0
     result_train_gen = evaluate(sess, generator, "train")
     result_test_gen = evaluate(sess, generator, "test")
+    result_train_dis = evaluate(sess, discriminator, "train")
+    result_test_dis = evaluate(sess, discriminator, "test")
 
     print("epoch GEN", epoch, "gen train: ", result_train_gen, "gen test:", result_test_gen)
+    print("epoch DIS", epoch, "dis train: ", result_train_dis, "dis test:", result_test_dis)
 
     # creating initial data values
     # of x and y
@@ -305,6 +308,8 @@ def main():
 
             result_train_gen = evaluate(sess, generator, "train")
             result_test_gen = evaluate(sess, generator, "test")
+            result_train_dis = evaluate(sess, discriminator, "train")
+            result_test_dis = evaluate(sess, discriminator, "test")
 
             if result_train_gen[1] > best_train[1]:
                 best_train = result_train_gen
@@ -312,17 +317,19 @@ def main():
                 generator.save_model(sess, workdir + "gan_generator.pkl")
 
             print("epoch GEN", ((epoch*num_iterations_gen) + g_epoch) + 1, "gen train: ", result_train_gen, "gen test:", result_test_gen)
+            print("epoch DIS", ((epoch*num_iterations_dis) + g_epoch) + 1, "dis train: ", result_train_dis, "dis test:", result_test_dis)
+
             x_values = np.append(x_values, ((epoch*num_iterations_gen) + g_epoch) + 1)
 
             y_values_train_gen = np.append(y_values_train_gen, best_train[0][1])
             y_values_test_gen = np.append(y_values_test_gen, best_test[0][1])
 
     if TRAIN:
-        line1, = plt.plot(x_values, y_values_train_gen, label = "P@100 Train DIS")
+        line1, = plt.plot(x_values, y_values_train_gen, label = "P@100 Train GEN")
         line1.set_xdata(x_values)
         line1.set_ydata(y_values_train_gen)
 
-    line2, = plt.plot(x_values, y_values_test_gen, label = "P@100 Test DIS")
+    line2, = plt.plot(x_values, y_values_test_gen, label = "P@100 Test GEN")
     line2.set_xdata(x_values)
     line2.set_ydata(y_values_test_gen)
 
