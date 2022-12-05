@@ -112,7 +112,7 @@ def ndcg_at_k(r, k):
     return dcg_at_k(r, k) / dcg_max
 
 
-def simple_test_one_user(x):
+def simple_test_one_user_test(x):
     rating = x[0]
     u = x[1]
 
@@ -121,29 +121,68 @@ def simple_test_one_user(x):
     for i in test_items:
         item_score.append((i, rating[i]))
 
-    item_score = sorted(item_score, key=lambda x: x[1])
-    item_score.reverse()
-    item_sort = [x[0] for x in item_score]
+    item_score = sorted(item_score, key=lambda x: x[1], reverse=True)
+    item_sort = [(x[0], x[1]) for x in item_score]
 
     r = []
-    for i in item_sort:
+    rmse = 0
+    for i, j in item_sort:
         if i in user_pos_test[u]:
             r.append(1)
+            rmse += np.square(1-j)
         else:
             r.append(0)
 
     p_3 = np.mean(r[:3])
     p_5 = np.mean(r[:5])
-    p_10 = np.mean(r[:10])
+    p_100 = np.mean(r[:100])
+
     ndcg_3 = ndcg_at_k(r, 3)
     ndcg_5 = ndcg_at_k(r, 5)
-    ndcg_10 = ndcg_at_k(r, 10)
+    ndcg_100 = ndcg_at_k(r, 100)
 
-    return np.array([p_3, p_5, p_10, ndcg_3, ndcg_5, ndcg_10])
+    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, rmse])
 
+def simple_test_one_user_train(x):
+    rating = x[0]
+    u = x[1]
 
-def simple_test(sess, model):
-    result = np.array([0.] * 6)
+    test_items = list(all_items)
+    item_score = []
+    for i in test_items:
+        item_score.append((i, rating[i]))
+
+    item_score = sorted(item_score, key=lambda x: x[1], reverse=True)
+    item_sort = [(x[0], x[1]) for x in item_score]
+
+    r = []
+    rmse = 0
+    for i, j in item_sort:
+        if i in user_pos_train[u]:
+            r.append(1)
+            rmse += np.square(1-j)
+        else:
+            r.append(0)
+
+    p_3 = np.mean(r[:3])
+    p_5 = np.mean(r[:5])
+    p_100 = np.mean(r[:100])
+
+    ndcg_3 = ndcg_at_k(r, 3)
+    ndcg_5 = ndcg_at_k(r, 5)
+    ndcg_100 = ndcg_at_k(r, 100)
+
+    return np.array([p_3, p_5, p_100, ndcg_3, ndcg_5, ndcg_100, rmse])
+
+def evaluate(sess, model, which_set = "test"):
+    num_ratings = 0
+    if which_set == "test":
+        which_func = simple_test_one_user_test
+        num_ratings = NUM_RATINGS_TEST
+    else:
+        which_func = simple_test_one_user_train
+        num_ratings = NUM_RATINGS_TRAIN
+    result = np.array([0.] * 3)
     pool = multiprocessing.Pool(cores)
     batch_size = 128
     test_users = user_pos_test.keys()
@@ -157,15 +196,14 @@ def simple_test(sess, model):
 
         user_batch_rating = sess.run(model.all_rating, {model.u: user_batch})
         user_batch_rating_uid = zip(user_batch_rating, user_batch)
-        batch_result = pool.map(simple_test_one_user, user_batch_rating_uid)
+        batch_result = pool.map(which_func, user_batch_rating_uid)
         for re in batch_result:
-            result += re
-
+            result += [re[2], re[5], re[6]]
     pool.close()
-    ret = result / test_user_num
-    ret = list(ret)
+    ret = (np.array(result.tolist()[:2]) / test_user_num).tolist()
+    ret.append((np.array(result.tolist()[2]) / num_ratings).tolist())
+    ret = zip(["p_100", "ndcg_100", "rmse"], ret)
     return ret
-
 
 def generate_for_d(sess, model, filename):
     data = []
@@ -199,8 +237,8 @@ def main():
     sess = tf.Session(config=config)
     sess.run(tf.global_variables_initializer())
 
-    print "gen ", simple_test(sess, generator)
-    print "dis ", simple_test(sess, discriminator)
+    print "gen ", evaluate(sess, generator, "Train")
+    print "dis ", evaluate(sess, discriminator, "Train")
 
     dis_log = open(workdir + 'dis_log.txt', 'w')
     gen_log = open(workdir + 'gen_log.txt', 'w')
@@ -254,7 +292,7 @@ def main():
                     _ = sess.run(generator.gan_updates,
                                  {generator.u: u, generator.i: sample, generator.reward: reward})
 
-                result = simple_test(sess, generator)
+                result = evaluate(sess, generator, "train")
                 print "epoch ", epoch, "gen: ", result
                 buf = '\t'.join([str(x) for x in result])
                 gen_log.write(str(epoch) + '\t' + buf + '\n')
