@@ -281,7 +281,7 @@ def main():
         y_values_test_dis =  np.array([result_test_dis[0][1]])
 
     for epoch in range(30):
-        with open(DIS_TRAIN_FILE)as fin:
+        with open(DIS_TRAIN_FILE) as fin:
             for line in fin:
                 line = line.split()
                 u = int(line[0])
