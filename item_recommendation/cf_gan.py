@@ -322,17 +322,26 @@ def main():
 
             x_values = np.append(x_values, ((epoch*num_iterations_gen) + g_epoch) + 1)
 
-            y_values_train_gen = np.append(y_values_train_gen, best_train[0][1])
-            y_values_test_gen = np.append(y_values_test_gen, best_test[0][1])
+            y_values_train_gen = np.append(y_values_train_gen, result_train_gen[0][1])
+            y_values_test_gen = np.append(y_values_test_gen, result_test_gen[0][1])
+            y_values_train_dis = np.append(y_values_train_dis, result_train_dis[0][1])
+            y_values_test_dis = np.append(y_values_test_dis, result_test_dis[0][1])
+
 
     if TRAIN:
         line1, = plt.plot(x_values, y_values_train_gen, label = "P@100 Train GEN")
         line1.set_xdata(x_values)
         line1.set_ydata(y_values_train_gen)
+        line2, = plt.plot(x_values, y_values_train_dis, label = "P@100 Train DIS")
+        line2.set_xdata(x_values)
+        line2.set_ydata(y_values_train_dis)
 
-    line2, = plt.plot(x_values, y_values_test_gen, label = "P@100 Test GEN")
-    line2.set_xdata(x_values)
-    line2.set_ydata(y_values_test_gen)
+    line3, = plt.plot(x_values, y_values_test_gen, label = "P@100 Test GEN")
+    line3.set_xdata(x_values)
+    line3.set_ydata(y_values_test_gen)
+    line4, = plt.plot(x_values, y_values_test_dis, label = "P@100 Test DIS")
+    line4.set_xdata(x_values)
+    line4.set_ydata(y_values_test_dis)
 
     plt.title("Model convergence", fontsize=20)
 
