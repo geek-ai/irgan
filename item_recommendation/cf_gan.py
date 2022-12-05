@@ -19,7 +19,7 @@ DNS_K = 5
 INIT_DELTA = 0.05
 BATCH_SIZE = 16
 TRAIN = False
-workdir = 'ml-100k/'
+workdir = 'seek/'
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
 dataset_deliminator = None
@@ -254,11 +254,14 @@ def main():
     x_values = np.array([0])
     y_values_train_gen =  np.array([result_train_gen[0][1]])
     y_values_test_gen =  np.array([result_test_gen[0][1]])
-    best_train = result_train_gen
-    best_test = result_test_gen
+    y_values_train_dis =  np.array([result_train_dis[0][1]])
+    y_values_test_dis =  np.array([result_test_dis[0][1]])
+
+    best_train_gen = result_train_gen
+    best_test_gen = result_test_gen
 
     num_iterations = 15
-    num_iterations_dis = 100
+    num_iterations_dis = 10
     num_iterations_gen = 50
     # minimax training
     for epoch in range(num_iterations):
@@ -293,6 +296,7 @@ def main():
 
                 pn = (1 - sample_lambda) * prob
                 pn[pos] += sample_lambda * 1.0 / len(pos)
+                pn = np.divide(pn, np.sum(pn))
                 # Now, pn is the Pn in importance sampling, prob is generator distribution p_\theta
 
                 sample = np.random.choice(np.arange(ITEM_NUM), 2 * len(pos), p=pn)
@@ -312,9 +316,9 @@ def main():
             result_train_dis = evaluate(sess, discriminator, "train")
             result_test_dis = evaluate(sess, discriminator, "test")
 
-            if result_train_gen[1] > best_train[1]:
-                best_train = result_train_gen
-                best_test = result_test_gen
+            if result_train_gen[1] > best_train_gen[1]:
+                best_train_gen = result_train_gen
+                best_test_gen = result_test_gen
                 generator.save_model(sess, workdir + "gan_generator.pkl")
 
             print("epoch GEN", ((epoch*num_iterations_gen) + g_epoch) + 1, "gen train: ", result_train_gen, "gen test:", result_test_gen)
