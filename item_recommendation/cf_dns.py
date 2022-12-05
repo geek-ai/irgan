@@ -265,7 +265,7 @@ def main():
         result_train_dis = evaluate(sess, discriminator, "train")
         result_test_dis = evaluate(sess, discriminator, "test")
 
-    if RUN_MF: print("epoch MF", epoch, "dis train: ", result_train_mf, "dis test:", result_test_mf)
+    if RUN_MF: print("epoch MF", epoch, "mf train: ", result_train_mf, "mf test:", result_test_mf)
     if RUN_DIS: print("epoch DIS", epoch, "dis train: ", result_train_dis, "dis test:", result_test_dis)
 
     generate_uniform(DIS_TRAIN_FILE) # Uniformly sample negative examples
@@ -304,7 +304,7 @@ def main():
             result_train_dis = evaluate(sess, discriminator, "train")
             result_test_dis = evaluate(sess, discriminator, "test")
 
-        if RUN_MF: print("epoch MF", epoch+1, "dis train: ", result_train_mf, "dis test:", result_test_mf)
+        if RUN_MF: print("epoch MF", epoch+1, "mf train: ", result_train_mf, "mf test:", result_test_mf)
         if RUN_DIS: print("epoch DIS", epoch+1, "dis train: ", result_train_dis, "dis test:", result_test_dis)
         x_values = np.append(x_values, epoch+1)
         if RUN_MF:
