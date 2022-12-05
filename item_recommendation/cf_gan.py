@@ -240,14 +240,13 @@ def main():
     sess = tf.Session(config=config)
     sess.run(tf.global_variables_initializer())
 
-    epoch = 0
     result_train_gen = evaluate(sess, generator, "train")
     result_test_gen = evaluate(sess, generator, "test")
     result_train_dis = evaluate(sess, discriminator, "train")
     result_test_dis = evaluate(sess, discriminator, "test")
 
-    print("epoch GEN", epoch, "gen train: ", result_train_gen, "gen test:", result_test_gen)
-    print("epoch DIS", epoch, "dis train: ", result_train_dis, "dis test:", result_test_dis)
+    print("epoch GEN", "0" , "gen train: ", result_train_gen, "gen test:", result_test_gen)
+    print("epoch DIS", "0", "dis train: ", result_train_dis, "dis test:", result_test_dis)
 
     # creating initial data values
     # of x and y
@@ -264,6 +263,7 @@ def main():
     num_iterations_dis = 10
     num_iterations_gen = 50
     # minimax training
+    current_iter = 0
     for epoch in range(num_iterations):
         for d_epoch in tqdm(range(num_iterations_dis)):
             if d_epoch % 5 == 0:
@@ -323,16 +323,16 @@ def main():
                 best_train_dis = result_train_dis
                 discriminator.save_model(sess, workdir + "gan_discriminator.pkl")
 
-            print("epoch GEN", ((epoch*num_iterations_gen) + g_epoch) + 1, "gen train: ", result_train_gen, "gen test:", result_test_gen)
-            print("epoch DIS", ((epoch*num_iterations_dis) + g_epoch) + 1, "dis train: ", result_train_dis, "dis test:", result_test_dis)
+            current_iter += 1
+            print("epoch GEN", current_iter, "gen train: ", result_train_gen, "gen test:", result_test_gen)
+            print("epoch DIS", current_iter, "dis train: ", result_train_dis, "dis test:", result_test_dis)
 
-            x_values = np.append(x_values, ((epoch*num_iterations_gen) + g_epoch) + 1)
+            x_values = np.append(x_values, current_iter)
 
             y_values_train_gen = np.append(y_values_train_gen, result_train_gen[0][1])
             y_values_test_gen = np.append(y_values_test_gen, result_test_gen[0][1])
             y_values_train_dis = np.append(y_values_train_dis, result_train_dis[0][1])
             y_values_test_dis = np.append(y_values_test_dis, result_test_dis[0][1])
-
 
     if TRAIN:
         line1, = plt.plot(x_values, y_values_train_gen, label = "P@100 Train GEN")
