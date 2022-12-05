@@ -258,7 +258,7 @@ def main():
     y_values_test_dis =  np.array([result_test_dis[0][1]])
 
     best_train_gen = result_train_gen
-    best_test_gen = result_test_gen
+    best_train_dis = result_train_dis
 
     num_iterations = 15
     num_iterations_dis = 10
@@ -318,8 +318,10 @@ def main():
 
             if result_train_gen[1] > best_train_gen[1]:
                 best_train_gen = result_train_gen
-                best_test_gen = result_test_gen
                 generator.save_model(sess, workdir + "gan_generator.pkl")
+            if result_train_dis[1] > best_train_dis[1]:
+                best_train_dis = result_train_dis
+                discriminator.save_model(sess, workdir + "gan_discriminator.pkl")
 
             print("epoch GEN", ((epoch*num_iterations_gen) + g_epoch) + 1, "gen train: ", result_train_gen, "gen test:", result_test_gen)
             print("epoch DIS", ((epoch*num_iterations_dis) + g_epoch) + 1, "dis train: ", result_train_dis, "dis test:", result_test_dis)
