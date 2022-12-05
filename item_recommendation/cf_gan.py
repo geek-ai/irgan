@@ -257,13 +257,14 @@ def main():
     y_values_test_dis =  np.array([result_test_dis[0][1]])
 
     best_train_gen = result_train_gen
+    best_test_gen = result_test_gen
     best_train_dis = result_train_dis
+    best_test_dis = result_test_dis
 
-    num_iterations = 15
+    num_iterations = 30
     num_iterations_dis = 10
     num_iterations_gen = 50
     # minimax training
-    current_iter = 0
     for epoch in range(num_iterations):
         for d_epoch in tqdm(range(num_iterations_dis)):
             if d_epoch % 5 == 0:
@@ -283,9 +284,15 @@ def main():
                 _ = sess.run(discriminator.d_updates,
                              feed_dict={discriminator.u: input_user, discriminator.i: input_item,
                                         discriminator.label: input_label})
+            result_train_dis = evaluate(sess, discriminator, "train")
+            result_test_dis = evaluate(sess, discriminator, "test")
+            if result_train_dis[1] > best_train_dis[1]:
+                best_train_dis = result_train_dis
+                best_test_dis = result_test_dis
+                discriminator.save_model(sess, workdir + "gan_discriminator.pkl")
 
         # Train G
-        for g_epoch in range(num_iterations_gen):  # 50
+        for g_epoch in tqdm(range(num_iterations_gen)):  # 50
             for u in user_pos_train:
                 sample_lambda = 0.2
                 pos = user_pos_train[u]
@@ -310,29 +317,22 @@ def main():
                 ###########################################################################
                 _ = sess.run(generator.gan_updates,
                              {generator.u: u, generator.i: sample, generator.reward: reward})
-
             result_train_gen = evaluate(sess, generator, "train")
             result_test_gen = evaluate(sess, generator, "test")
-            result_train_dis = evaluate(sess, discriminator, "train")
-            result_test_dis = evaluate(sess, discriminator, "test")
-
             if result_train_gen[1] > best_train_gen[1]:
                 best_train_gen = result_train_gen
+                best_test_gen = result_test_gen
                 generator.save_model(sess, workdir + "gan_generator.pkl")
-            if result_train_dis[1] > best_train_dis[1]:
-                best_train_dis = result_train_dis
-                discriminator.save_model(sess, workdir + "gan_discriminator.pkl")
 
-            current_iter += 1
-            print("epoch GEN", current_iter, "gen train: ", result_train_gen, "gen test:", result_test_gen)
-            print("epoch DIS", current_iter, "dis train: ", result_train_dis, "dis test:", result_test_dis)
+        print("epoch GEN", epoch, "gen train: ", best_train_gen, "gen test:", best_test_gen)
+        print("epoch DIS", epoch, "dis train: ", best_train_dis, "dis test:", best_test_dis)
 
-            x_values = np.append(x_values, current_iter)
+        x_values = np.append(x_values, epoch)
 
-            y_values_train_gen = np.append(y_values_train_gen, result_train_gen[0][1])
-            y_values_test_gen = np.append(y_values_test_gen, result_test_gen[0][1])
-            y_values_train_dis = np.append(y_values_train_dis, result_train_dis[0][1])
-            y_values_test_dis = np.append(y_values_test_dis, result_test_dis[0][1])
+        y_values_train_gen = np.append(y_values_train_gen, result_train_gen[0][1])
+        y_values_test_gen = np.append(y_values_test_gen, result_test_gen[0][1])
+        y_values_train_dis = np.append(y_values_train_dis, result_train_dis[0][1])
+        y_values_test_dis = np.append(y_values_test_dis, result_test_dis[0][1])
 
     if TRAIN:
         line1, = plt.plot(x_values, y_values_train_gen, label = "P@100 Train GEN")
