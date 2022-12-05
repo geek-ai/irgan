@@ -20,15 +20,15 @@ RUN_DIS = True
 EMB_DIM = 5
 DNS_K = 5
 workdir = 'seek/'
-train_filename = 'applies.csv.train'
-test_filename = 'applies.csv.test'
+train_filename = 'train'
+test_filename = 'test'
 
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
-dataset_deliminator = ","
-user_index_original_dataset = 2
-item_index_original_dataset = 3
-rate_index_original_dataset = 4
+dataset_deliminator = None
+user_index_original_dataset = 0
+item_index_original_dataset = 1
+rate_index_original_dataset = 2
 #########################################################################################
 # Load data
 #########################################################################################
@@ -251,8 +251,8 @@ def generate_uniform(filename):
 def main():
     np.random.seed(70)
     param = None
-    mf = MF(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=param, initdelta=0.05, learning_rate=0.05)
-    discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.1, param=param, initdelta=0.05, learning_rate=0.05)
+    mf = MF(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.01, param=param, initdelta=0.05, learning_rate=0.05)
+    discriminator = DIS(ITEM_NUM, USER_NUM, EMB_DIM, lamda=0.01, param=param, initdelta=0.05, learning_rate=0.05)
 
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
