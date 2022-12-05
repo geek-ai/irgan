@@ -6,6 +6,7 @@ import numpy as np
 import utils as ut
 import multiprocessing
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 from mf_model import MF
 
 cores = multiprocessing.cpu_count()
@@ -261,7 +262,7 @@ def main():
     num_iterations_gen = 50
     # minimax training
     for epoch in range(num_iterations):
-        for d_epoch in range(num_iterations_dis):
+        for d_epoch in tqdm(range(num_iterations_dis)):
             if d_epoch % 5 == 0:
                 generate_for_d(sess, generator, DIS_TRAIN_FILE)
                 train_size = ut.file_len(DIS_TRAIN_FILE)
