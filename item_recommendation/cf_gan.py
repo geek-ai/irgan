@@ -262,6 +262,8 @@ def main():
     y_values_test_gen =  np.array([result_test_gen[0][1]])
     y_values_train_dis =  np.array([result_train_dis[0][1]])
     y_values_test_dis =  np.array([result_test_dis[0][1]])
+    y_values_train_mf =  np.array([result_train_mf[0][1]])
+    y_values_test_mf =  np.array([result_test_mf[0][1]])
 
     best_train_gen = result_train_gen
     best_test_gen = result_test_gen
