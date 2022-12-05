@@ -263,7 +263,7 @@ def main():
 
     num_iterations = 30
     num_iterations_dis = 10
-    num_iterations_gen = 50
+    num_iterations_gen = 10
     # minimax training
     for epoch in range(num_iterations):
         for d_epoch in tqdm(range(num_iterations_dis)):
