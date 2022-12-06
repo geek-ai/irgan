@@ -203,11 +203,11 @@ def evaluate(sess, model, which_set = "test"):
         user_batch_rating_uid = zip(user_batch_rating, user_batch)
         batch_result = pool.map(which_func, user_batch_rating_uid)
         for re in batch_result:
-            result += [re[2], re[5], re[6]]
+            result += [re[1], re[4], re[6]]
     pool.close()
     ret = (np.array(result.tolist()[:2]) / test_user_num).tolist()
     ret.append((np.array(result.tolist()[2]) / num_ratings).tolist())
-    ret = zip(["p_100", "ndcg_100", "rmse"], ret)
+    ret = zip(["p_5", "ndcg_5", "rmse"], ret)
     return ret
 
 def generate_for_d(sess, model, filename):
@@ -360,23 +360,23 @@ def main():
         y_values_test_mf = np.append(y_values_test_mf, result_test_mf[0][1])
 
     if TRAIN:
-        line1, = plt.plot(x_values, y_values_train_gen, label = "P@100 Train GEN")
+        line1, = plt.plot(x_values, y_values_train_gen, label = "P@5 Train GEN")
         line1.set_xdata(x_values)
         line1.set_ydata(y_values_train_gen)
-        line2, = plt.plot(x_values, y_values_train_dis, label = "P@100 Train DIS")
+        line2, = plt.plot(x_values, y_values_train_dis, label = "P@5 Train DIS")
         line2.set_xdata(x_values)
         line2.set_ydata(y_values_train_dis)
-        line3, = plt.plot(x_values, y_values_train_mf, label = "P@100 Train MF")
+        line3, = plt.plot(x_values, y_values_train_mf, label = "P@5 Train MF")
         line3.set_xdata(x_values)
         line3.set_ydata(y_values_train_mf)
 
-    line4, = plt.plot(x_values, y_values_test_gen, label = "P@100 Test GEN")
+    line4, = plt.plot(x_values, y_values_test_gen, label = "P@5 Test GEN")
     line4.set_xdata(x_values)
     line4.set_ydata(y_values_test_gen)
-    line5, = plt.plot(x_values, y_values_test_dis, label = "P@100 Test DIS")
+    line5, = plt.plot(x_values, y_values_test_dis, label = "P@5 Test DIS")
     line5.set_xdata(x_values)
     line5.set_ydata(y_values_test_dis)
-    line6, = plt.plot(x_values, y_values_test_mf, label = "P@100 Test MF")
+    line6, = plt.plot(x_values, y_values_test_mf, label = "P@5 Test MF")
     line6.set_xdata(x_values)
     line6.set_ydata(y_values_test_mf)
 

@@ -222,11 +222,11 @@ def evaluate(sess, model, which_set = "test"):
         user_batch_rating_uid = zip(user_batch_rating, user_batch)
         batch_result = pool.map(which_func, user_batch_rating_uid)
         for re in batch_result:
-            result += [re[2], re[5], re[6]]
+            result += [re[1], re[4], re[6]]
     pool.close()
     ret = (np.array(result.tolist()[:2]) / test_user_num).tolist()
     ret.append((np.array(result.tolist()[2]) / num_ratings).tolist())
-    ret = zip(["p_100", "ndcg_100", "rmse"], ret)
+    ret = zip(["p_5", "ndcg_5", "rmse"], ret)
     return ret
 
 
@@ -316,20 +316,20 @@ def main():
 
     if TRAIN:
         if RUN_MF:
-            line1, = plt.plot(x_values, y_values_train_mf, label = "P@100 Train MF")
+            line1, = plt.plot(x_values, y_values_train_mf, label = "P@5 Train MF")
             line1.set_xdata(x_values)
             line1.set_ydata(y_values_train_mf)
         if RUN_DIS:
-            line2, = plt.plot(x_values, y_values_train_dis, label = "P@100 Train DIS")
+            line2, = plt.plot(x_values, y_values_train_dis, label = "P@5 Train DIS")
             line2.set_xdata(x_values)
             line2.set_ydata(y_values_train_dis)
 
     if RUN_MF:
-        line3, = plt.plot(x_values, y_values_test_mf, label = "P@100 Test MF")
+        line3, = plt.plot(x_values, y_values_test_mf, label = "P@5 Test MF")
         line3.set_xdata(x_values)
         line3.set_ydata(y_values_test_mf)
     if RUN_DIS:
-        line4, = plt.plot(x_values, y_values_test_dis, label = "P@100 Test DIS")
+        line4, = plt.plot(x_values, y_values_test_dis, label = "P@5 Test DIS")
         line4.set_xdata(x_values)
         line4.set_ydata(y_values_test_dis)
 
