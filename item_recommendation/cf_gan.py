@@ -20,7 +20,7 @@ DNS_K = 5
 INIT_DELTA = 0.05
 BATCH_SIZE = 16
 TRAIN = False
-workdir = 'seek/'
+workdir = 'ml-100k/'
 DIS_TRAIN_FILE = workdir + 'dis-train.txt'
 DIS_TRAIN_FILE_UNIFORM = workdir + 'dis-train-uniform.txt'
 DIS_MODEL_FILE = workdir + "model_dns.pkl"
@@ -54,9 +54,9 @@ with open(workdir + 'train')as fin:
             j_index += 1
         uid = int(uid_to_index[line[user_index_original_dataset]])
         iid = int(jid_to_index[line[item_index_original_dataset]])
-        #r = float(line[rate_index_original_dataset])
-        r = 1
-        if r > 0:
+        r = float(line[rate_index_original_dataset])
+        #r = 1
+        if r > 3.99:
             if uid in user_pos_train:
                 user_pos_train[uid].append(iid)
             else:
@@ -83,9 +83,9 @@ with open(workdir + 'test')as fin:
             j_index += 1
         uid = int(uid_to_index[line[user_index_original_dataset]])
         iid = int(jid_to_index[line[item_index_original_dataset]])
-        #r = float(line[rate_index_original_dataset])
-        r = 1
-        if r > 0:
+        r = float(line[rate_index_original_dataset])
+        #r = 1
+        if r > 3.99:
             if uid in user_pos_test:
                 user_pos_test[uid].append(iid)
             else:
@@ -98,7 +98,7 @@ with open(workdir + 'test')as fin:
 
 USER_NUM = len(all_user_ids)
 ITEM_NUM = len(all_items_ids)
-print(USER_NUM, ITEM_NUM)
+print("--->", USER_NUM, ITEM_NUM)
 all_items = set(range(ITEM_NUM))
 
 all_users = user_pos_train.keys()
@@ -342,6 +342,8 @@ def main():
                 #positive:
                 _ = sess.run(mf.d_updates,
                              feed_dict={mf.u: [u], mf.pos: [i], mf.real: [1.0]})
+                _ = sess.run(mf.d_updates,
+                             feed_dict={mf.u: [u], mf.pos: [j], mf.real: [0.0]})
 
         result_train_mf = evaluate(sess, mf, "train")
         result_test_mf = evaluate(sess, mf, "test")
