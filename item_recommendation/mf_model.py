@@ -38,7 +38,7 @@ class MF():
         self.u_embedding = tf.nn.embedding_lookup(self.user_embeddings, self.u)
         self.pos_embedding = tf.nn.embedding_lookup(self.item_embeddings, self.pos)
 
-        self.pre_loss = tf.square(self.real - tf.reduce_sum(tf.multiply(self.u_embedding, self.pos_embedding))) + self.lamda * (
+        self.pre_loss = tf.square(self.real - (tf.reduce_sum(tf.multiply(self.u_embedding, self.pos_embedding)) + self.pos_bias)) + self.lamda * (
             tf.nn.l2_loss(self.u_embedding) +
             tf.nn.l2_loss(self.pos_embedding) +
             tf.nn.l2_loss(self.pos_bias)
