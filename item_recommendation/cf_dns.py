@@ -53,9 +53,9 @@ with open(workdir + 'train')as fin:
             j_index += 1
         uid = int(uid_to_index[line[user_index_original_dataset]])
         iid = int(jid_to_index[line[item_index_original_dataset]])
-        r = float(line[rate_index_original_dataset])
-        #r = 1
-        if r > 3.99:
+        #r = float(line[rate_index_original_dataset])
+        r = 1
+        if r > 0:
             if uid in user_pos_train:
                 user_pos_train[uid].append(iid)
             else:
@@ -82,9 +82,9 @@ with open(workdir + 'test')as fin:
             j_index += 1
         uid = int(uid_to_index[line[user_index_original_dataset]])
         iid = int(jid_to_index[line[item_index_original_dataset]])
-        r = float(line[rate_index_original_dataset])
-        #r = 1
-        if r > 3.99:
+        #r = float(line[rate_index_original_dataset])
+        r = 1
+        if r > 0:
             if uid in user_pos_test:
                 user_pos_test[uid].append(iid)
             else:
